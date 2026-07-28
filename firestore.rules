@@ -47,12 +47,14 @@ service cloud.firestore {
       }
 
       // This contact was already nominated before: bump their received count by exactly one.
+      // Uses get() with a default so records from before these fields existed self-heal
+      // instead of getting permanently stuck (treats a missing field as 0 / empty list).
       function isReceivedIncrement() {
         let before = resource.data;
         let after = request.resource.data;
         return after.diff(before).affectedKeys().hasOnly(['receivedNominationCount', 'receivedNominators'])
-          && after.receivedNominationCount == before.receivedNominationCount + 1
-          && after.receivedNominators.size() == before.receivedNominators.size() + 1
+          && after.receivedNominationCount == before.get('receivedNominationCount', 0) + 1
+          && after.receivedNominators.size() == before.get('receivedNominators', []).size() + 1
           && isApprovedNominator(
                after.receivedNominators[after.receivedNominators.size() - 1].nominatorToken,
                after.receivedNominators[after.receivedNominators.size() - 1].name
@@ -60,13 +62,14 @@ service cloud.firestore {
       }
 
       // A dancer tracking their own "sent" nominations, capped at 10, one at a time.
+      // Same self-healing default as above for records missing these fields.
       function isSentIncrement() {
         let before = resource.data;
         let after = request.resource.data;
         return after.diff(before).affectedKeys().hasOnly(['sentNominationCount', 'sentNominatedNames'])
-          && after.sentNominationCount == before.sentNominationCount + 1
+          && after.sentNominationCount == before.get('sentNominationCount', 0) + 1
           && after.sentNominationCount <= 10
-          && after.sentNominatedNames.size() == before.sentNominatedNames.size() + 1;
+          && after.sentNominatedNames.size() == before.get('sentNominatedNames', []).size() + 1;
       }
     }
 
