@@ -279,8 +279,9 @@ details[open] summary::after {
 }
 
 .icon-button.contact-toggle.contacted {
-  color: var(--green-deep);
+  background: var(--green-deep);
   border-color: var(--green-deep);
+  color: #ffffff;
 }
 
 .dancer-row details summary {
