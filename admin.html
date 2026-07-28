@@ -138,7 +138,29 @@
         });
       });
       content.querySelectorAll("[data-copy]").forEach((btn) => {
-        btn.addEventListener("click", () => navigator.clipboard.writeText(btn.dataset.copy));
+        btn.addEventListener("click", async () => {
+          const text = btn.dataset.copy;
+          const originalLabel = btn.textContent;
+          try {
+            if (navigator.clipboard) {
+              await navigator.clipboard.writeText(text);
+            } else {
+              // Clipboard API needs a secure context (HTTPS); fall back for plain HTTP.
+              const tmp = document.createElement("textarea");
+              tmp.value = text;
+              tmp.style.position = "fixed";
+              tmp.style.opacity = "0";
+              document.body.appendChild(tmp);
+              tmp.select();
+              document.execCommand("copy");
+              document.body.removeChild(tmp);
+            }
+            btn.textContent = "Copied!";
+          } catch {
+            btn.textContent = "Copy failed — select manually";
+          }
+          setTimeout(() => { btn.textContent = originalLabel; }, 1500);
+        });
       });
 
       document.getElementById("seed-form").addEventListener("submit", async (e) => {
