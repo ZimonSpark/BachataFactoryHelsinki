@@ -87,14 +87,17 @@ button:hover {
   transform: translateY(-1px);
 }
 
+a.secondary,
 button.secondary {
   background: transparent;
   color: var(--gold);
   border: 1px solid var(--gold);
 }
 
+a.secondary:hover,
 button.secondary:hover {
   background: rgba(200, 169, 106, 0.12);
+  color: var(--gold-soft);
 }
 
 button.danger {
@@ -148,7 +151,7 @@ input:focus {
 }
 
 .nominator-list li::before {
-  content: "— ";
+  content: "\2022  ";
 }
 
 details summary {

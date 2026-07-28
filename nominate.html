@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nominate someone — Bachata Factory Helsinki</title>
+  <title>Nominate someone · Bachata Factory Helsinki</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="page">
-    <nav class="top"><a href="index.html">&larr; Bachata Factory Helsinki</a></nav>
+    <nav class="top"><a href="#" id="back-link" aria-label="Back">&larr;</a></nav>
     <div id="content">
       <p class="muted">Checking your invite&hellip;</p>
     </div>
@@ -20,6 +20,11 @@
 
     const content = document.getElementById("content");
     const fromToken = getQueryParam("from");
+
+    document.getElementById("back-link").addEventListener("click", (e) => {
+      e.preventDefault();
+      history.back();
+    });
 
     function renderNoInvite() {
       content.innerHTML = `
@@ -35,7 +40,7 @@
       content.innerHTML = `
         <h1>You&rsquo;ve nominated the maximum</h1>
         <div class="notice info">
-          You&rsquo;ve already nominated ${MAX_SENT_NOMINATIONS} people &mdash; that&rsquo;s the
+          You&rsquo;ve already nominated ${MAX_SENT_NOMINATIONS} people, that&rsquo;s the
           maximum per dancer. Thanks for helping build the group!
         </div>
       `;
