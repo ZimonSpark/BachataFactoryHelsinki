@@ -7,27 +7,79 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email == 'simon.borali7@gmail.com';
     }
 
+    function nominatorPath(token) {
+      return /databases/$(database)/documents/dancers/$(token);
+    }
+
+    // A nomination is only valid if it names a real, approved dancer as the nominator,
+    // and the claimed nominator name matches that dancer's actual name (prevents
+    // impersonation now that the nominate form no longer asks for a typed-in name).
+    function isApprovedNominator(token, claimedName) {
+      return token is string
+        && exists(nominatorPath(token))
+        && get(nominatorPath(token)).data.status == 'approved'
+        && get(nominatorPath(token)).data.name == claimedName;
+    }
+
     match /dancers/{token} {
       // Anyone holding a token can look up that one dancer (invite.html, nominate.html).
       allow get: if true;
       // Nobody but the admin can list/enumerate all dancers — keeps tokens unguessable.
       allow list: if isAdmin();
-      allow write: if isAdmin();
+
+      allow create: if isAdmin() || isNewNomineeCreate();
+      allow update: if isAdmin() || isReceivedIncrement() || isSentIncrement();
+      allow delete: if isAdmin();
+
+      // First time this contact has ever been nominated: creates their record as 'pending'.
+      function isNewNomineeCreate() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(
+                 ['name', 'contact', 'contactKey', 'status', 'receivedNominationCount',
+                  'receivedNominators', 'sentNominationCount', 'sentNominatedNames', 'createdAt']
+               )
+          && d.status == 'pending'
+          && d.receivedNominationCount == 1
+          && d.receivedNominators.size() == 1
+          && d.sentNominationCount == 0
+          && d.sentNominatedNames.size() == 0
+          && isApprovedNominator(d.receivedNominators[0].nominatorToken, d.receivedNominators[0].name);
+      }
+
+      // This contact was already nominated before: bump their received count by exactly one.
+      function isReceivedIncrement() {
+        let before = resource.data;
+        let after = request.resource.data;
+        return after.diff(before).affectedKeys().hasOnly(['receivedNominationCount', 'receivedNominators'])
+          && after.receivedNominationCount == before.receivedNominationCount + 1
+          && after.receivedNominators.size() == before.receivedNominators.size() + 1
+          && isApprovedNominator(
+               after.receivedNominators[after.receivedNominators.size() - 1].nominatorToken,
+               after.receivedNominators[after.receivedNominators.size() - 1].name
+             );
+      }
+
+      // A dancer tracking their own "sent" nominations, capped at 10, one at a time.
+      function isSentIncrement() {
+        let before = resource.data;
+        let after = request.resource.data;
+        return after.diff(before).affectedKeys().hasOnly(['sentNominationCount', 'sentNominatedNames'])
+          && after.sentNominationCount == before.sentNominationCount + 1
+          && after.sentNominationCount <= 10
+          && after.sentNominatedNames.size() == before.sentNominatedNames.size() + 1;
+      }
     }
 
-    match /nominationRequests/{requestId} {
-      // Anyone can submit a nomination, but only if it's tied to a real, approved invite
-      // token (nominatorToken) and matches the expected shape. This is what actually
-      // enforces "invite-only" nominations, not just the UI.
-      allow create: if request.resource.data.keys().hasOnly(
-                        ['nomineeName', 'nomineeContact', 'contactKey', 'nominatorName', 'nominatorToken', 'createdAt', 'status']
-                      )
-                    && request.resource.data.status == 'pending'
-                    && request.resource.data.createdAt == request.time
-                    && request.resource.data.nominatorToken is string
-                    && exists(/databases/$(database)/documents/dancers/$(request.resource.data.nominatorToken))
-                    && get(/databases/$(database)/documents/dancers/$(request.resource.data.nominatorToken)).data.status == 'approved';
-      allow read, update, delete: if isAdmin();
+    // Maps a normalized contact (email/phone) to the dancer token for that person, so a
+    // nominator can check "has this person already been nominated?" with a plain get() —
+    // without needing list/query access to the dancers collection (which would let anyone
+    // enumerate every dancer and break the unguessable-token privacy model).
+    match /contactIndex/{contactKey} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+                    || (request.resource.data.keys().hasOnly(['token']) && request.resource.data.token is string);
+      allow update, delete: if isAdmin();
     }
   }
 }

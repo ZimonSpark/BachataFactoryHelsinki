@@ -4,11 +4,12 @@
 
 import { firebaseConfig, isConfigured, ADMIN_EMAIL } from "./firebase-config.js";
 import { generateToken, normalizeContactKey } from "./util.js";
-import { mockDancers, mockRequests } from "./mock-data.js";
+import { mockDancers } from "./mock-data.js";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.13.2";
 
 export const MOCK_MODE = !isConfigured;
+export const MAX_SENT_NOMINATIONS = 10;
 
 let firebasePromise;
 async function getFirebase() {
@@ -24,6 +25,10 @@ async function getFirebase() {
   return firebasePromise;
 }
 
+function contactDocId(contactKey) {
+  return contactKey.replace(/\//g, "_").slice(0, 1500);
+}
+
 export async function getDancerByToken(token) {
   if (MOCK_MODE) {
     const d = mockDancers.get(token);
@@ -34,25 +39,72 @@ export async function getDancerByToken(token) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
-export async function createNominationRequest({ nomineeName, nomineeContact, nominatorName, nominatorToken }) {
+// Nominator is the already-fetched dancer record for the person submitting the nomination
+// (looked up via their own invite token) — their name is trusted from that record, never
+// typed in by hand.
+export async function submitNomination({ nomineeName, nomineeContact, nominator }) {
   const contactKey = normalizeContactKey(nomineeContact);
-  const payload = {
-    nomineeName: nomineeName.trim(),
-    nomineeContact: nomineeContact.trim(),
-    contactKey,
-    nominatorName: nominatorName.trim(),
-    nominatorToken,
-    status: "pending",
-  };
+  const nominatorEntry = { name: nominator.name, timestamp: new Date(), nominatorToken: nominator.id };
+
   if (MOCK_MODE) {
-    mockRequests.push({ id: `req${mockRequests.length + 1}`, ...payload, createdAt: new Date().toISOString() });
+    const existing = [...mockDancers.values()].find((d) => d.contactKey === contactKey);
+    if (existing) {
+      existing.receivedNominationCount += 1;
+      existing.receivedNominators = [...existing.receivedNominators, nominatorEntry];
+    } else {
+      mockDancers.set(generateToken(), {
+        name: nomineeName.trim(),
+        contact: nomineeContact.trim(),
+        contactKey,
+        status: "pending",
+        receivedNominationCount: 1,
+        receivedNominators: [nominatorEntry],
+        sentNominationCount: 0,
+        sentNominatedNames: [],
+      });
+    }
+    const me = mockDancers.get(nominator.id);
+    me.sentNominationCount += 1;
+    me.sentNominatedNames = [...me.sentNominatedNames, nomineeName.trim()];
     return;
   }
+
   const { db, firestore } = await getFirebase();
-  await firestore.addDoc(firestore.collection(db, "nominationRequests"), {
-    ...payload,
-    createdAt: firestore.serverTimestamp(),
+  const indexRef = firestore.doc(db, "contactIndex", contactDocId(contactKey));
+  const indexSnap = await firestore.getDoc(indexRef);
+  const batch = firestore.writeBatch(db);
+
+  if (indexSnap.exists()) {
+    const targetToken = indexSnap.data().token;
+    const targetRef = firestore.doc(db, "dancers", targetToken);
+    const targetSnap = await firestore.getDoc(targetRef);
+    const targetData = targetSnap.data();
+    batch.update(targetRef, {
+      receivedNominationCount: (targetData.receivedNominationCount || 0) + 1,
+      receivedNominators: [...(targetData.receivedNominators || []), nominatorEntry],
+    });
+  } else {
+    const newToken = generateToken();
+    batch.set(firestore.doc(db, "dancers", newToken), {
+      name: nomineeName.trim(),
+      contact: nomineeContact.trim(),
+      contactKey,
+      status: "pending",
+      receivedNominationCount: 1,
+      receivedNominators: [nominatorEntry],
+      sentNominationCount: 0,
+      sentNominatedNames: [],
+      createdAt: firestore.serverTimestamp(),
+    });
+    batch.set(indexRef, { token: newToken });
+  }
+
+  batch.update(firestore.doc(db, "dancers", nominator.id), {
+    sentNominationCount: (nominator.sentNominationCount || 0) + 1,
+    sentNominatedNames: [...(nominator.sentNominatedNames || []), nomineeName.trim()],
   });
+
+  await batch.commit();
 }
 
 export function onAdminAuthChange(callback) {
@@ -85,88 +137,43 @@ export async function signOutAdmin() {
   await authMod.signOut(auth);
 }
 
-export async function listPendingRequests() {
-  if (MOCK_MODE) return mockRequests.filter((r) => r.status === "pending");
-  const { db, firestore } = await getFirebase();
-  const q = firestore.query(firestore.collection(db, "nominationRequests"), firestore.where("status", "==", "pending"));
-  const snap = await firestore.getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-}
-
-export async function listApprovedDancers() {
-  if (MOCK_MODE) return [...mockDancers.entries()].map(([id, d]) => ({ id, ...d }));
-  const { db, firestore } = await getFirebase();
-  const q = firestore.query(firestore.collection(db, "dancers"), firestore.where("status", "==", "approved"));
-  const snap = await firestore.getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-}
-
-export async function approveGroup(contactKey, requests) {
-  const nominators = requests.map((r) => ({ name: r.nominatorName, timestamp: r.createdAt }));
-  const nomineeName = requests[0].nomineeName;
-  const nomineeContact = requests[0].nomineeContact;
-
+export async function listAllDancers() {
+  let list;
   if (MOCK_MODE) {
-    let existingToken = [...mockDancers.entries()].find(([, d]) => d.contactKey === contactKey)?.[0];
-    if (existingToken) {
-      const d = mockDancers.get(existingToken);
-      d.nominationCount += requests.length;
-      d.nominators.push(...nominators);
-    } else {
-      existingToken = generateToken();
-      mockDancers.set(existingToken, {
-        name: nomineeName,
-        contact: nomineeContact,
-        contactKey,
-        status: "approved",
-        nominationCount: requests.length,
-        nominators,
-        approvedAt: new Date().toISOString(),
-      });
-    }
-    requests.forEach((r) => { r.status = "merged"; });
-    return existingToken;
-  }
-
-  const { db, firestore } = await getFirebase();
-  const q = firestore.query(firestore.collection(db, "dancers"), firestore.where("contactKey", "==", contactKey));
-  const snap = await firestore.getDocs(q);
-  let token;
-  if (!snap.empty) {
-    const existing = snap.docs[0];
-    token = existing.id;
-    const data = existing.data();
-    await firestore.updateDoc(existing.ref, {
-      nominationCount: (data.nominationCount || 0) + requests.length,
-      nominators: [...(data.nominators || []), ...nominators],
-    });
+    list = [...mockDancers.entries()].map(([id, d]) => ({ id, ...d }));
   } else {
-    token = generateToken();
-    await firestore.setDoc(firestore.doc(db, "dancers", token), {
-      name: nomineeName,
-      contact: nomineeContact,
-      contactKey,
-      status: "approved",
-      nominationCount: requests.length,
-      nominators,
-      approvedAt: firestore.serverTimestamp(),
-    });
+    const { db, firestore } = await getFirebase();
+    const snap = await firestore.getDocs(firestore.collection(db, "dancers"));
+    list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
-  await Promise.all(
-    requests.map((r) => firestore.updateDoc(firestore.doc(db, "nominationRequests", r.id), { status: "merged" }))
-  );
-  return token;
+  return list.sort((a, b) => (b.receivedNominationCount || 0) - (a.receivedNominationCount || 0));
 }
 
-export async function rejectGroup(requests) {
+export async function approveDancer(token) {
   if (MOCK_MODE) {
-    requests.forEach((r) => { r.status = "rejected"; });
+    const d = mockDancers.get(token);
+    d.status = "approved";
+    d.approvedAt = new Date().toISOString();
     return;
   }
   const { db, firestore } = await getFirebase();
-  await Promise.all(
-    requests.map((r) => firestore.updateDoc(firestore.doc(db, "nominationRequests", r.id), { status: "rejected" }))
-  );
+  await firestore.updateDoc(firestore.doc(db, "dancers", token), {
+    status: "approved",
+    approvedAt: firestore.serverTimestamp(),
+  });
+}
+
+export async function adjustReceivedCount(token, delta) {
+  if (MOCK_MODE) {
+    const d = mockDancers.get(token);
+    d.receivedNominationCount = Math.max(0, d.receivedNominationCount + delta);
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  const ref = firestore.doc(db, "dancers", token);
+  const snap = await firestore.getDoc(ref);
+  const current = snap.data().receivedNominationCount || 0;
+  await firestore.updateDoc(ref, { receivedNominationCount: Math.max(0, current + delta) });
 }
 
 export async function addDancerManually({ name, contact }) {
@@ -177,14 +184,19 @@ export async function addDancerManually({ name, contact }) {
     contact: contact.trim(),
     contactKey,
     status: "approved",
-    nominationCount: 0,
-    nominators: [],
+    receivedNominationCount: 0,
+    receivedNominators: [],
+    sentNominationCount: 0,
+    sentNominatedNames: [],
   };
   if (MOCK_MODE) {
     mockDancers.set(token, { ...payload, approvedAt: new Date().toISOString() });
     return token;
   }
   const { db, firestore } = await getFirebase();
-  await firestore.setDoc(firestore.doc(db, "dancers", token), { ...payload, approvedAt: firestore.serverTimestamp() });
+  const batch = firestore.writeBatch(db);
+  batch.set(firestore.doc(db, "dancers", token), { ...payload, approvedAt: firestore.serverTimestamp() });
+  batch.set(firestore.doc(db, "contactIndex", contactDocId(contactKey)), { token });
+  await batch.commit();
   return token;
 }

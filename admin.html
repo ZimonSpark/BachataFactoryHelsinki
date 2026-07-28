@@ -24,10 +24,9 @@
       onAdminAuthChange,
       signInAdmin,
       signOutAdmin,
-      listPendingRequests,
-      listApprovedDancers,
-      approveGroup,
-      rejectGroup,
+      listAllDancers,
+      approveDancer,
+      adjustReceivedCount,
       addDancerManually,
     } from "./js/data.js";
     import { escapeHtml, formatDate } from "./js/util.js";
@@ -35,71 +34,51 @@
     const content = document.getElementById("content");
     const who = document.getElementById("who");
 
-    function groupByContact(requests) {
-      const groups = new Map();
-      for (const r of requests) {
-        if (!groups.has(r.contactKey)) groups.set(r.contactKey, []);
-        groups.get(r.contactKey).push(r);
-      }
-      return [...groups.entries()];
-    }
-
     function inviteUrl(token) {
       return `${location.origin}${location.pathname.replace(/admin\.html$/, "")}invite.html?t=${encodeURIComponent(token)}`;
     }
 
+    function dancerRow(d) {
+      const approved = d.status === "approved";
+      const nominators = d.receivedNominators || [];
+      return `
+        <div class="dancer-row" data-token="${escapeHtml(d.id)}">
+          <div class="dancer-row-main">
+            <span class="status-icon" title="${approved ? "Approved" : "Pending"}">${approved ? "&#9989;" : "&#9203;"}</span>
+            <strong class="dancer-name">${escapeHtml(d.name)}</strong>
+            <span class="count-control">
+              <button class="secondary" data-decr="${escapeHtml(d.id)}" aria-label="Decrease nominations">&minus;</button>
+              <span class="badge">${d.receivedNominationCount || 0}</span>
+              <button class="secondary" data-incr="${escapeHtml(d.id)}" aria-label="Increase nominations">+</button>
+            </span>
+            <button class="secondary" data-copy="${inviteUrl(d.id)}">Copy link</button>
+            ${!approved ? `<button data-approve="${escapeHtml(d.id)}">Approve</button>` : ""}
+          </div>
+          <details>
+            <summary>Details</summary>
+            <div class="details-body">
+              <p class="muted">${escapeHtml(d.contact)}</p>
+              <p class="invite-link">${inviteUrl(d.id)}</p>
+              ${
+                nominators.length
+                  ? `<ul class="nominator-list">${nominators.map((n) => `<li>${escapeHtml(n.name)} &middot; ${formatDate(n.timestamp)}</li>`).join("")}</ul>`
+                  : `<p class="muted">No nominators on record.</p>`
+              }
+            </div>
+          </details>
+        </div>
+      `;
+    }
+
     async function renderDashboard() {
-      content.innerHTML = `<p class="muted">Loading requests and dancers&hellip;</p>`;
-      const [pending, approved] = await Promise.all([listPendingRequests(), listApprovedDancers()]);
-      const groups = groupByContact(pending);
-
-      const pendingHtml = groups.length
-        ? groups
-            .map(([contactKey, requests], i) => `
-              <div class="request-group">
-                <strong>${escapeHtml(requests[0].nomineeName)}</strong>
-                <span class="badge">${requests.length} nomination${requests.length > 1 ? "s" : ""}</span>
-                <p class="muted">${escapeHtml(requests[0].nomineeContact)}</p>
-                <ul class="nominator-list">
-                  ${requests.map((r) => `<li>${escapeHtml(r.nominatorName)} &middot; ${formatDate(r.createdAt)}</li>`).join("")}
-                </ul>
-                <div class="actions">
-                  <button data-approve="${i}">Approve</button>
-                  <button class="danger" data-reject="${i}">Reject</button>
-                </div>
-              </div>
-            `)
-            .join("")
-        : `<p class="muted">No pending nominations.</p>`;
-
-      const approvedHtml = approved.length
-        ? approved
-            .map(
-              (d) => `
-              <div class="request-group">
-                <strong>${escapeHtml(d.name)}</strong>
-                <span class="badge">${d.nominationCount || 0} nomination${(d.nominationCount || 0) === 1 ? "" : "s"}</span>
-                <p class="muted">${escapeHtml(d.contact)}</p>
-                ${
-                  (d.nominators || []).length
-                    ? `<ul class="nominator-list">${d.nominators.map((n) => `<li>${escapeHtml(n.name)} &middot; ${formatDate(n.timestamp)}</li>`).join("")}</ul>`
-                    : ""
-                }
-                <p class="invite-link">${inviteUrl(d.id)}</p>
-                <div class="actions">
-                  <button class="secondary" data-copy="${inviteUrl(d.id)}">Copy link</button>
-                </div>
-              </div>
-            `
-            )
-            .join("")
-        : `<p class="muted">No approved dancers yet.</p>`;
+      content.innerHTML = `<p class="muted">Loading dancers&hellip;</p>`;
+      const dancers = await listAllDancers();
 
       content.innerHTML = `
         ${MOCK_MODE ? `<div class="notice info">Local preview mode &mdash; showing mock data, nothing is saved.</div>` : ""}
         <div class="card">
-          <h2 style="font-size:1.2rem">Pending nominations</h2>
-          ${pendingHtml}
+          <h2 style="font-size:1.2rem">Nominated dancers</h2>
+          ${dancers.length ? dancers.map(dancerRow).join("") : `<p class="muted">No one has been nominated yet.</p>`}
         </div>
         <div class="card">
           <h2 style="font-size:1.2rem">Add a dancer manually</h2>
@@ -115,25 +94,26 @@
           </form>
           <div id="seed-message"></div>
         </div>
-        <div class="card">
-          <h2 style="font-size:1.2rem">Approved dancers</h2>
-          ${approvedHtml}
-        </div>
       `;
 
       content.querySelectorAll("[data-approve]").forEach((btn) => {
         btn.addEventListener("click", async () => {
-          const [contactKey, requests] = groups[Number(btn.dataset.approve)];
           btn.disabled = true;
-          await approveGroup(contactKey, requests);
+          await approveDancer(btn.dataset.approve);
           renderDashboard();
         });
       });
-      content.querySelectorAll("[data-reject]").forEach((btn) => {
+      content.querySelectorAll("[data-incr]").forEach((btn) => {
         btn.addEventListener("click", async () => {
-          const [, requests] = groups[Number(btn.dataset.reject)];
           btn.disabled = true;
-          await rejectGroup(requests);
+          await adjustReceivedCount(btn.dataset.incr, 1);
+          renderDashboard();
+        });
+      });
+      content.querySelectorAll("[data-decr]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          await adjustReceivedCount(btn.dataset.decr, -1);
           renderDashboard();
         });
       });

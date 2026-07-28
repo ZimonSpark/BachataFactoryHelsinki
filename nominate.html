@@ -15,7 +15,7 @@
   </main>
 
   <script type="module">
-    import { getDancerByToken, createNominationRequest } from "./js/data.js";
+    import { getDancerByToken, submitNomination, MAX_SENT_NOMINATIONS } from "./js/data.js";
     import { escapeHtml, getQueryParam } from "./js/util.js";
 
     const content = document.getElementById("content");
@@ -31,10 +31,26 @@
       `;
     }
 
+    function renderLimitReached(nominator) {
+      content.innerHTML = `
+        <h1>You&rsquo;ve nominated the maximum</h1>
+        <div class="notice info">
+          You&rsquo;ve already nominated ${MAX_SENT_NOMINATIONS} people &mdash; that&rsquo;s the
+          maximum per dancer. Thanks for helping build the group!
+        </div>
+      `;
+    }
+
     function renderForm(nominator) {
       content.innerHTML = `
         <h1>Nominate someone</h1>
         <p class="tagline">Nominating on behalf of ${escapeHtml(nominator.name)}</p>
+        <div class="card">
+          <p class="muted">
+            To choose your nomination, keep in mind the question &ldquo;From whom would you
+            gladly receive feedback?&rdquo;, and remember teachers cannot be nominated.
+          </p>
+        </div>
         <form id="nominate-form" class="card">
           <label for="nomineeName">Their name</label>
           <input type="text" id="nomineeName" required />
@@ -42,8 +58,9 @@
           <label for="nomineeContact">Their email or phone</label>
           <input type="text" id="nomineeContact" required />
 
-          <label for="nominatorName">Your name</label>
-          <input type="text" id="nominatorName" value="${escapeHtml(nominator.name)}" required />
+          <p class="muted" style="margin-top: 1rem">
+            Your submission will be sent for approval to the administrators.
+          </p>
 
           <div class="actions">
             <button type="submit">Submit nomination</button>
@@ -56,18 +73,17 @@
         e.preventDefault();
         const nomineeName = document.getElementById("nomineeName").value;
         const nomineeContact = document.getElementById("nomineeContact").value;
-        const nominatorName = document.getElementById("nominatorName").value;
         const messageEl = document.getElementById("form-message");
         const submitBtn = e.target.querySelector("button[type=submit]");
 
         submitBtn.disabled = true;
         try {
-          await createNominationRequest({ nomineeName, nomineeContact, nominatorName, nominatorToken: fromToken });
+          await submitNomination({ nomineeName, nomineeContact, nominator });
           content.innerHTML = `
             <h1>Nomination submitted</h1>
             <div class="notice success">
-              Thanks! Your nomination for ${escapeHtml(nomineeName)} has been sent to Simon for review.
-              If it's approved, they'll receive a personal invite link.
+              Thanks! Your nomination for ${escapeHtml(nomineeName)} has been sent to the
+              administrators for approval.
             </div>
           `;
         } catch (err) {
@@ -84,6 +100,8 @@
         .then((dancer) => {
           if (!dancer || dancer.status !== "approved") {
             renderNoInvite();
+          } else if ((dancer.sentNominationCount || 0) >= MAX_SENT_NOMINATIONS) {
+            renderLimitReached(dancer);
           } else {
             renderForm(dancer);
           }

@@ -2,6 +2,10 @@
 // values. Lets us click through the whole site locally before the real Firebase project exists.
 // Nothing here persists across a page reload.
 
+function daysAgo(n) {
+  return new Date(Date.now() - n * 86400000).toISOString();
+}
+
 export const mockDancers = new Map([
   [
     "demo1234a",
@@ -10,35 +14,59 @@ export const mockDancers = new Map([
       contact: "maria@example.com",
       contactKey: "maria@example.com",
       status: "approved",
-      nominationCount: 2,
-      nominators: [
-        { name: "Ana Silva", timestamp: new Date().toISOString() },
-        { name: "Jonas Berg", timestamp: new Date().toISOString() },
+      receivedNominationCount: 3,
+      receivedNominators: [
+        { name: "Ana Silva", timestamp: daysAgo(5), nominatorToken: "seed0" },
+        { name: "Jonas Berg", timestamp: daysAgo(3), nominatorToken: "seed1" },
+        { name: "Pekka Niemi", timestamp: daysAgo(1), nominatorToken: "seed2" },
       ],
-      approvedAt: new Date().toISOString(),
+      sentNominationCount: 2,
+      sentNominatedNames: ["Elena Kovac", "Tomas Virtanen"],
+      approvedAt: daysAgo(6),
+    },
+  ],
+  [
+    "midcount1",
+    {
+      name: "Liisa Aho",
+      contact: "liisa@example.com",
+      contactKey: "liisa@example.com",
+      status: "approved",
+      receivedNominationCount: 1,
+      receivedNominators: [{ name: "Maria Lopez", timestamp: daysAgo(2), nominatorToken: "demo1234a" }],
+      sentNominationCount: 7,
+      sentNominatedNames: ["A", "B", "C", "D", "E", "F", "G"],
+      approvedAt: daysAgo(4),
+    },
+  ],
+  [
+    "fullcount1",
+    {
+      name: "Petra Salo",
+      contact: "petra@example.com",
+      contactKey: "petra@example.com",
+      status: "approved",
+      receivedNominationCount: 0,
+      receivedNominators: [],
+      sentNominationCount: 10,
+      sentNominatedNames: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      approvedAt: daysAgo(3),
+    },
+  ],
+  [
+    "pendingnom1",
+    {
+      name: "Elena Kovac",
+      contact: "elena@example.com",
+      contactKey: "elena@example.com",
+      status: "pending",
+      receivedNominationCount: 2,
+      receivedNominators: [
+        { name: "Maria Lopez", timestamp: daysAgo(1), nominatorToken: "demo1234a" },
+        { name: "Jonas Berg", timestamp: daysAgo(1), nominatorToken: "seed1" },
+      ],
+      sentNominationCount: 0,
+      sentNominatedNames: [],
     },
   ],
 ]);
-
-export const mockRequests = [
-  {
-    id: "req1",
-    nomineeName: "Elena Kovac",
-    nomineeContact: "elena@example.com",
-    contactKey: "elena@example.com",
-    nominatorName: "Maria Lopez",
-    nominatorToken: "demo1234a",
-    createdAt: new Date().toISOString(),
-    status: "pending",
-  },
-  {
-    id: "req2",
-    nomineeName: "Elena Kovac",
-    nomineeContact: "elena@example.com",
-    contactKey: "elena@example.com",
-    nominatorName: "Jonas Berg",
-    nominatorToken: "demo1234a",
-    createdAt: new Date().toISOString(),
-    status: "pending",
-  },
-];

@@ -31,21 +31,45 @@
       `;
     }
 
+    function counterClass(count) {
+      if (count >= 10) return "counter--full";
+      if (count >= 5) return "counter--mid";
+      return "counter--low";
+    }
+
     function renderInvite(dancer, token) {
+      const sentCount = dancer.sentNominationCount || 0;
+      const sentNames = dancer.sentNominatedNames || [];
       content.innerHTML = `
         <h1>Hello ${escapeHtml(dancer.name)}, you have been nominated</h1>
-        <p class="tagline">You're invited to Bachata Factory Helsinki &mdash; an invite-only night of bachata sensual.</p>
+        <p class="tagline">You're invited to Bachata Factory Helsinki &mdash; a peer-driven project for bachata dancers.</p>
         <div class="card">
           <p>
             Someone who's already part of this circle nominated you personally. This isn't a
             public event &mdash; your spot is reserved because they wanted you there.
           </p>
-          <p class="muted">Full details on date, venue, and program will follow soon.</p>
+          <p class="muted">
+            BFH runs weekly in Vallila starting mid-September &mdash; see the
+            <a href="index.html">home page</a> for the full details.
+          </p>
         </div>
         <div class="card">
           <h2 style="font-size: 1.2rem">Know someone who belongs here too?</h2>
-          <p class="muted">You can nominate them, and Simon will review the request.</p>
-          <a class="button" href="nominate.html?from=${encodeURIComponent(token)}">Nominate someone</a>
+          <p class="muted">You can nominate between 5 and 10 dancers. Here's how you're doing so far:</p>
+          <p>
+            <span class="counter ${counterClass(sentCount)}">${sentCount}</span>
+            <span class="muted">/ 10 nominated</span>
+          </p>
+          ${
+            sentNames.length
+              ? `<ul class="nominator-list">${sentNames.map((n) => `<li>${escapeHtml(n)}</li>`).join("")}</ul>`
+              : `<p class="muted">You haven't nominated anyone yet.</p>`
+          }
+          ${
+            sentCount >= 10
+              ? `<p class="muted">You've reached the maximum of 10 nominations.</p>`
+              : `<a class="button" href="nominate.html?from=${encodeURIComponent(token)}">Nominate someone</a>`
+          }
         </div>
       `;
     }
