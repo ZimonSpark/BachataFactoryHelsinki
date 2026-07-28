@@ -1,4 +1,4 @@
-export function normalizeContactKey(raw) {
+export function normalizeKey(raw) {
   return raw.trim().toLowerCase().replace(/\s+/g, "");
 }
 

@@ -244,6 +244,18 @@ details[open] summary::after {
   font-size: 0.85rem;
 }
 
+.icon-button {
+  padding: 0.4rem 0.6rem !important;
+  font-size: 1rem !important;
+  line-height: 1;
+}
+
+.icon-button.danger-armed {
+  background: var(--danger);
+  color: #2a0d0d;
+  border-color: var(--danger);
+}
+
 .dancer-row details summary {
   font-family: inherit;
   color: var(--text-muted);

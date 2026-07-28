@@ -31,11 +31,11 @@ service cloud.firestore {
       allow update: if isAdmin() || isReceivedIncrement() || isSentIncrement();
       allow delete: if isAdmin();
 
-      // First time this contact has ever been nominated: creates their record as 'pending'.
+      // First time this person has ever been nominated: creates their record as 'pending'.
       function isNewNomineeCreate() {
         let d = request.resource.data;
         return d.keys().hasOnly(
-                 ['name', 'contact', 'contactKey', 'status', 'receivedNominationCount',
+                 ['name', 'contact', 'nameKey', 'status', 'receivedNominationCount',
                   'receivedNominators', 'sentNominationCount', 'sentNominatedNames', 'createdAt']
                )
           && d.status == 'pending'
@@ -46,7 +46,7 @@ service cloud.firestore {
           && isApprovedNominator(d.receivedNominators[0].nominatorToken, d.receivedNominators[0].name);
       }
 
-      // This contact was already nominated before: bump their received count by exactly one.
+      // This person was already nominated before (matched by name): bump their received count by exactly one.
       // Uses get() with a default so records from before these fields existed self-heal
       // instead of getting permanently stuck (treats a missing field as 0 / empty list).
       function isReceivedIncrement() {
@@ -73,11 +73,11 @@ service cloud.firestore {
       }
     }
 
-    // Maps a normalized contact (email/phone) to the dancer token for that person, so a
-    // nominator can check "has this person already been nominated?" with a plain get() —
-    // without needing list/query access to the dancers collection (which would let anyone
-    // enumerate every dancer and break the unguessable-token privacy model).
-    match /contactIndex/{contactKey} {
+    // Maps a normalized name to the dancer token for that person, so a nominator can check
+    // "has this person already been nominated?" with a plain get() — without needing
+    // list/query access to the dancers collection (which would let anyone enumerate every
+    // dancer and break the unguessable-token privacy model).
+    match /nameIndex/{nameKey} {
       allow get: if true;
       allow list: if isAdmin();
       allow create: if isAdmin()

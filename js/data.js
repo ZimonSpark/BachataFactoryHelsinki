@@ -3,7 +3,7 @@
 // firebase-config.js has been filled in yet.
 
 import { firebaseConfig, isConfigured, ADMIN_EMAIL } from "./firebase-config.js";
-import { generateToken, normalizeContactKey } from "./util.js";
+import { generateToken, normalizeKey } from "./util.js";
 import { mockDancers } from "./mock-data.js";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.13.2";
@@ -25,8 +25,10 @@ async function getFirebase() {
   return firebasePromise;
 }
 
-function contactDocId(contactKey) {
-  return contactKey.replace(/\//g, "_").slice(0, 1500);
+// Dancers are matched/deduped by their (normalized) name, not contact info — nominators
+// often type descriptive text instead of a real email/phone, so name is the more reliable key.
+function nameDocId(nameKey) {
+  return nameKey.replace(/\//g, "_").slice(0, 1500);
 }
 
 export async function getDancerByToken(token) {
@@ -43,11 +45,11 @@ export async function getDancerByToken(token) {
 // (looked up via their own invite token) — their name is trusted from that record, never
 // typed in by hand.
 export async function submitNomination({ nomineeName, nomineeContact, nominator }) {
-  const contactKey = normalizeContactKey(nomineeContact);
+  const nameKey = normalizeKey(nomineeName);
   const nominatorEntry = { name: nominator.name, timestamp: new Date(), nominatorToken: nominator.id };
 
   if (MOCK_MODE) {
-    const existing = [...mockDancers.values()].find((d) => d.contactKey === contactKey);
+    const existing = [...mockDancers.values()].find((d) => d.nameKey === nameKey);
     if (existing) {
       existing.receivedNominationCount += 1;
       existing.receivedNominators = [...existing.receivedNominators, nominatorEntry];
@@ -55,7 +57,7 @@ export async function submitNomination({ nomineeName, nomineeContact, nominator 
       mockDancers.set(generateToken(), {
         name: nomineeName.trim(),
         contact: nomineeContact.trim(),
-        contactKey,
+        nameKey,
         status: "pending",
         receivedNominationCount: 1,
         receivedNominators: [nominatorEntry],
@@ -70,7 +72,7 @@ export async function submitNomination({ nomineeName, nomineeContact, nominator 
   }
 
   const { db, firestore } = await getFirebase();
-  const indexRef = firestore.doc(db, "contactIndex", contactDocId(contactKey));
+  const indexRef = firestore.doc(db, "nameIndex", nameDocId(nameKey));
   const indexSnap = await firestore.getDoc(indexRef);
   const batch = firestore.writeBatch(db);
 
@@ -88,7 +90,7 @@ export async function submitNomination({ nomineeName, nomineeContact, nominator 
     batch.set(firestore.doc(db, "dancers", newToken), {
       name: nomineeName.trim(),
       contact: nomineeContact.trim(),
-      contactKey,
+      nameKey,
       status: "pending",
       receivedNominationCount: 1,
       receivedNominators: [nominatorEntry],
@@ -176,13 +178,27 @@ export async function adjustReceivedCount(token, delta) {
   await firestore.updateDoc(ref, { receivedNominationCount: Math.max(0, current + delta) });
 }
 
+export async function deleteDancer(token, nameKey) {
+  if (MOCK_MODE) {
+    mockDancers.delete(token);
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  const batch = firestore.writeBatch(db);
+  batch.delete(firestore.doc(db, "dancers", token));
+  if (nameKey) {
+    batch.delete(firestore.doc(db, "nameIndex", nameDocId(nameKey)));
+  }
+  await batch.commit();
+}
+
 export async function addDancerManually({ name, contact }) {
-  const contactKey = normalizeContactKey(contact);
+  const nameKey = normalizeKey(name);
   const token = generateToken();
   const payload = {
     name: name.trim(),
     contact: contact.trim(),
-    contactKey,
+    nameKey,
     status: "approved",
     receivedNominationCount: 0,
     receivedNominators: [],
@@ -196,7 +212,7 @@ export async function addDancerManually({ name, contact }) {
   const { db, firestore } = await getFirebase();
   const batch = firestore.writeBatch(db);
   batch.set(firestore.doc(db, "dancers", token), { ...payload, approvedAt: firestore.serverTimestamp() });
-  batch.set(firestore.doc(db, "contactIndex", contactDocId(contactKey)), { token });
+  batch.set(firestore.doc(db, "nameIndex", nameDocId(nameKey)), { token });
   await batch.commit();
   return token;
 }

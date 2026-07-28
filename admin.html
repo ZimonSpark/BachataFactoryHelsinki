@@ -28,6 +28,7 @@
       approveDancer,
       adjustReceivedCount,
       addDancerManually,
+      deleteDancer,
     } from "./js/data.js";
     import { escapeHtml, formatDate } from "./js/util.js";
 
@@ -53,11 +54,12 @@
             </span>
             <button class="secondary" data-copy="${inviteUrl(d.id)}">Copy link</button>
             ${!approved ? `<button data-approve="${escapeHtml(d.id)}">Approve</button>` : ""}
+            <button class="secondary icon-button" data-delete="${escapeHtml(d.id)}" data-name-key="${escapeHtml(d.nameKey || "")}" aria-label="Delete nomination" title="Delete nomination">&#128465;</button>
           </div>
           <details>
             <summary>Details</summary>
             <div class="details-body">
-              <p class="muted">${escapeHtml(d.contact)}</p>
+              <p class="muted">Contact: ${escapeHtml(d.contact)}</p>
               <p class="invite-link">${inviteUrl(d.id)}</p>
               ${
                 nominators.length
@@ -140,6 +142,25 @@
             btn.textContent = "Copy failed — select manually";
           }
           setTimeout(() => { btn.textContent = originalLabel; }, 1500);
+        });
+      });
+      content.querySelectorAll("[data-delete]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (btn.dataset.armed === "true") {
+            clearTimeout(Number(btn.dataset.armTimer));
+            btn.disabled = true;
+            await deleteDancer(btn.dataset.delete, btn.dataset.nameKey);
+            renderDashboard();
+            return;
+          }
+          btn.dataset.armed = "true";
+          btn.classList.add("danger-armed");
+          btn.dataset.armTimer = String(
+            setTimeout(() => {
+              btn.dataset.armed = "false";
+              btn.classList.remove("danger-armed");
+            }, 2000)
+          );
         });
       });
 

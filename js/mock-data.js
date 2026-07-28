@@ -12,7 +12,7 @@ export const mockDancers = new Map([
     {
       name: "Maria Lopez",
       contact: "maria@example.com",
-      contactKey: "maria@example.com",
+      nameKey: "marialopez",
       status: "approved",
       receivedNominationCount: 3,
       receivedNominators: [
@@ -30,7 +30,7 @@ export const mockDancers = new Map([
     {
       name: "Liisa Aho",
       contact: "liisa@example.com",
-      contactKey: "liisa@example.com",
+      nameKey: "liisaaho",
       status: "approved",
       receivedNominationCount: 1,
       receivedNominators: [{ name: "Maria Lopez", timestamp: daysAgo(2), nominatorToken: "demo1234a" }],
@@ -44,7 +44,7 @@ export const mockDancers = new Map([
     {
       name: "Petra Salo",
       contact: "petra@example.com",
-      contactKey: "petra@example.com",
+      nameKey: "petrasalo",
       status: "approved",
       receivedNominationCount: 0,
       receivedNominators: [],
@@ -58,7 +58,7 @@ export const mockDancers = new Map([
     {
       name: "Elena Kovac",
       contact: "elena@example.com",
-      contactKey: "elena@example.com",
+      nameKey: "elenakovac",
       status: "pending",
       receivedNominationCount: 2,
       receivedNominators: [
