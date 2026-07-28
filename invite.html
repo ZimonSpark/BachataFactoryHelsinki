@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You're invited — Bachata Factory Helsinki</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <nav class="top"><a href="index.html">&larr; Bachata Factory Helsinki</a></nav>
+    <div id="content">
+      <p class="muted">Loading your invitation&hellip;</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { getDancerByToken } from "./js/data.js";
+    import { escapeHtml, getQueryParam } from "./js/util.js";
+
+    const content = document.getElementById("content");
+    const token = getQueryParam("t");
+
+    function renderNotFound() {
+      content.innerHTML = `
+        <h1>Invite not found</h1>
+        <div class="notice error">
+          This invite link isn't valid, or it may have expired. If you think this is a mistake,
+          get in touch with Simon directly.
+        </div>
+      `;
+    }
+
+    function renderInvite(dancer, token) {
+      content.innerHTML = `
+        <h1>Hello ${escapeHtml(dancer.name)}, you have been nominated</h1>
+        <p class="tagline">You're invited to Bachata Factory Helsinki &mdash; an invite-only night of bachata sensual.</p>
+        <div class="card">
+          <p>
+            Someone who's already part of this circle nominated you personally. This isn't a
+            public event &mdash; your spot is reserved because they wanted you there.
+          </p>
+          <p class="muted">Full details on date, venue, and program will follow soon.</p>
+        </div>
+        <div class="card">
+          <h2 style="font-size: 1.2rem">Know someone who belongs here too?</h2>
+          <p class="muted">You can nominate them, and Simon will review the request.</p>
+          <a class="button" href="nominate.html?from=${encodeURIComponent(token)}">Nominate someone</a>
+        </div>
+      `;
+    }
+
+    if (!token) {
+      renderNotFound();
+    } else {
+      getDancerByToken(token)
+        .then((dancer) => {
+          if (!dancer || dancer.status !== "approved") {
+            renderNotFound();
+          } else {
+            renderInvite(dancer, token);
+          }
+        })
+        .catch(() => renderNotFound());
+    }
+  </script>
+</body>
+</html>

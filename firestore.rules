@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'simon.borali7@gmail.com';
+    }
+
+    match /dancers/{token} {
+      // Anyone holding a token can look up that one dancer (invite.html, nominate.html).
+      allow get: if true;
+      // Nobody but the admin can list/enumerate all dancers — keeps tokens unguessable.
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /nominationRequests/{requestId} {
+      // Anyone can submit a nomination, but only if it's tied to a real, approved invite
+      // token (nominatorToken) and matches the expected shape. This is what actually
+      // enforces "invite-only" nominations, not just the UI.
+      allow create: if request.resource.data.keys().hasOnly(
+                        ['nomineeName', 'nomineeContact', 'contactKey', 'nominatorName', 'nominatorToken', 'createdAt', 'status']
+                      )
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.nominatorToken is string
+                    && exists(/databases/$(database)/documents/dancers/$(request.resource.data.nominatorToken))
+                    && get(/databases/$(database)/documents/dancers/$(request.resource.data.nominatorToken)).data.status == 'approved';
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nominate someone — Bachata Factory Helsinki</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <nav class="top"><a href="index.html">&larr; Bachata Factory Helsinki</a></nav>
+    <div id="content">
+      <p class="muted">Checking your invite&hellip;</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { getDancerByToken, createNominationRequest } from "./js/data.js";
+    import { escapeHtml, getQueryParam } from "./js/util.js";
+
+    const content = document.getElementById("content");
+    const fromToken = getQueryParam("from");
+
+    function renderNoInvite() {
+      content.innerHTML = `
+        <h1>Nominations are invite-only</h1>
+        <div class="notice error">
+          You need your own personal invite link to nominate someone. If you were nominated,
+          open your invite link first and use the "Nominate someone" button there.
+        </div>
+      `;
+    }
+
+    function renderForm(nominator) {
+      content.innerHTML = `
+        <h1>Nominate someone</h1>
+        <p class="tagline">Nominating on behalf of ${escapeHtml(nominator.name)}</p>
+        <form id="nominate-form" class="card">
+          <label for="nomineeName">Their name</label>
+          <input type="text" id="nomineeName" required />
+
+          <label for="nomineeContact">Their email or phone</label>
+          <input type="text" id="nomineeContact" required />
+
+          <label for="nominatorName">Your name</label>
+          <input type="text" id="nominatorName" value="${escapeHtml(nominator.name)}" required />
+
+          <div class="actions">
+            <button type="submit">Submit nomination</button>
+          </div>
+        </form>
+        <div id="form-message"></div>
+      `;
+
+      document.getElementById("nominate-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const nomineeName = document.getElementById("nomineeName").value;
+        const nomineeContact = document.getElementById("nomineeContact").value;
+        const nominatorName = document.getElementById("nominatorName").value;
+        const messageEl = document.getElementById("form-message");
+        const submitBtn = e.target.querySelector("button[type=submit]");
+
+        submitBtn.disabled = true;
+        try {
+          await createNominationRequest({ nomineeName, nomineeContact, nominatorName, nominatorToken: fromToken });
+          content.innerHTML = `
+            <h1>Nomination submitted</h1>
+            <div class="notice success">
+              Thanks! Your nomination for ${escapeHtml(nomineeName)} has been sent to Simon for review.
+              If it's approved, they'll receive a personal invite link.
+            </div>
+          `;
+        } catch (err) {
+          submitBtn.disabled = false;
+          messageEl.innerHTML = `<div class="notice error">Something went wrong: ${escapeHtml(err.message)}</div>`;
+        }
+      });
+    }
+
+    if (!fromToken) {
+      renderNoInvite();
+    } else {
+      getDancerByToken(fromToken)
+        .then((dancer) => {
+          if (!dancer || dancer.status !== "approved") {
+            renderNoInvite();
+          } else {
+            renderForm(dancer);
+          }
+        })
+        .catch(() => renderNoInvite());
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Bachata Factory Helsinki</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <nav class="top">
+      <a href="index.html">&larr; Bachata Factory Helsinki</a>
+      <span id="who"></span>
+    </nav>
+    <h1>Admin</h1>
+    <div id="content">
+      <p class="muted">Loading&hellip;</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import {
+      MOCK_MODE,
+      onAdminAuthChange,
+      signInAdmin,
+      signOutAdmin,
+      listPendingRequests,
+      listApprovedDancers,
+      approveGroup,
+      rejectGroup,
+      addDancerManually,
+    } from "./js/data.js";
+    import { escapeHtml, formatDate } from "./js/util.js";
+
+    const content = document.getElementById("content");
+    const who = document.getElementById("who");
+
+    function groupByContact(requests) {
+      const groups = new Map();
+      for (const r of requests) {
+        if (!groups.has(r.contactKey)) groups.set(r.contactKey, []);
+        groups.get(r.contactKey).push(r);
+      }
+      return [...groups.entries()];
+    }
+
+    function inviteUrl(token) {
+      return `${location.origin}${location.pathname.replace(/admin\.html$/, "")}invite.html?t=${encodeURIComponent(token)}`;
+    }
+
+    async function renderDashboard() {
+      content.innerHTML = `<p class="muted">Loading requests and dancers&hellip;</p>`;
+      const [pending, approved] = await Promise.all([listPendingRequests(), listApprovedDancers()]);
+      const groups = groupByContact(pending);
+
+      const pendingHtml = groups.length
+        ? groups
+            .map(([contactKey, requests], i) => `
+              <div class="request-group">
+                <strong>${escapeHtml(requests[0].nomineeName)}</strong>
+                <span class="badge">${requests.length} nomination${requests.length > 1 ? "s" : ""}</span>
+                <p class="muted">${escapeHtml(requests[0].nomineeContact)}</p>
+                <ul class="nominator-list">
+                  ${requests.map((r) => `<li>${escapeHtml(r.nominatorName)} &middot; ${formatDate(r.createdAt)}</li>`).join("")}
+                </ul>
+                <div class="actions">
+                  <button data-approve="${i}">Approve</button>
+                  <button class="danger" data-reject="${i}">Reject</button>
+                </div>
+              </div>
+            `)
+            .join("")
+        : `<p class="muted">No pending nominations.</p>`;
+
+      const approvedHtml = approved.length
+        ? approved
+            .map(
+              (d) => `
+              <div class="request-group">
+                <strong>${escapeHtml(d.name)}</strong>
+                <span class="badge">${d.nominationCount || 0} nomination${(d.nominationCount || 0) === 1 ? "" : "s"}</span>
+                <p class="muted">${escapeHtml(d.contact)}</p>
+                ${
+                  (d.nominators || []).length
+                    ? `<ul class="nominator-list">${d.nominators.map((n) => `<li>${escapeHtml(n.name)} &middot; ${formatDate(n.timestamp)}</li>`).join("")}</ul>`
+                    : ""
+                }
+                <p class="invite-link">${inviteUrl(d.id)}</p>
+                <div class="actions">
+                  <button class="secondary" data-copy="${inviteUrl(d.id)}">Copy link</button>
+                </div>
+              </div>
+            `
+            )
+            .join("")
+        : `<p class="muted">No approved dancers yet.</p>`;
+
+      content.innerHTML = `
+        ${MOCK_MODE ? `<div class="notice info">Local preview mode &mdash; showing mock data, nothing is saved.</div>` : ""}
+        <div class="card">
+          <h2 style="font-size:1.2rem">Pending nominations</h2>
+          ${pendingHtml}
+        </div>
+        <div class="card">
+          <h2 style="font-size:1.2rem">Add a dancer manually</h2>
+          <p class="muted">Use this to seed the first invites, since nominating requires an existing invite.</p>
+          <form id="seed-form">
+            <label for="seedName">Name</label>
+            <input type="text" id="seedName" required />
+            <label for="seedContact">Email or phone</label>
+            <input type="text" id="seedContact" required />
+            <div class="actions">
+              <button type="submit">Create invite</button>
+            </div>
+          </form>
+          <div id="seed-message"></div>
+        </div>
+        <div class="card">
+          <h2 style="font-size:1.2rem">Approved dancers</h2>
+          ${approvedHtml}
+        </div>
+      `;
+
+      content.querySelectorAll("[data-approve]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const [contactKey, requests] = groups[Number(btn.dataset.approve)];
+          btn.disabled = true;
+          await approveGroup(contactKey, requests);
+          renderDashboard();
+        });
+      });
+      content.querySelectorAll("[data-reject]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const [, requests] = groups[Number(btn.dataset.reject)];
+          btn.disabled = true;
+          await rejectGroup(requests);
+          renderDashboard();
+        });
+      });
+      content.querySelectorAll("[data-copy]").forEach((btn) => {
+        btn.addEventListener("click", () => navigator.clipboard.writeText(btn.dataset.copy));
+      });
+
+      document.getElementById("seed-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("seedName").value;
+        const contact = document.getElementById("seedContact").value;
+        try {
+          const token = await addDancerManually({ name, contact });
+          await renderDashboard();
+          document.getElementById("seed-message").innerHTML = `<div class="notice success">Created invite for ${escapeHtml(name)}: <span class="invite-link">${inviteUrl(token)}</span></div>`;
+        } catch (err) {
+          document.getElementById("seed-message").innerHTML = `<div class="notice error">${escapeHtml(err.message)}</div>`;
+        }
+      });
+    }
+
+    function renderSignedOut() {
+      content.innerHTML = `
+        <div class="card">
+          <p>Sign in with the admin Google account to manage nominations.</p>
+          <button id="signin">Sign in with Google</button>
+        </div>
+      `;
+      document.getElementById("signin").addEventListener("click", () => signInAdmin().catch((err) => alert(err.message)));
+    }
+
+    function renderUnauthorized(email) {
+      content.innerHTML = `
+        <div class="notice error">Signed in as ${escapeHtml(email)}, which isn't the admin account.</div>
+        <button id="signout" class="secondary">Sign out</button>
+      `;
+      document.getElementById("signout").addEventListener("click", () => signOutAdmin());
+    }
+
+    if (MOCK_MODE) {
+      who.textContent = "local preview";
+      renderDashboard();
+    } else {
+      onAdminAuthChange(({ signedIn, isAdmin, email }) => {
+        if (!signedIn) {
+          who.textContent = "";
+          renderSignedOut();
+        } else if (!isAdmin) {
+          who.textContent = email;
+          renderUnauthorized(email);
+        } else {
+          who.innerHTML = `${escapeHtml(email)} &middot; <a href="#" id="signout-link">sign out</a>`;
+          document.getElementById("signout-link")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            signOutAdmin();
+          });
+          renderDashboard();
+        }
+      });
+    }
+  </script>
+</body>
+</html>
