@@ -272,6 +272,17 @@ details[open] summary::after {
   border-color: var(--danger);
 }
 
+.icon-button.contact-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button.contact-toggle.contacted {
+  color: var(--green-deep);
+  border-color: var(--green-deep);
+}
+
 .dancer-row details summary {
   font-family: inherit;
   color: var(--text-muted);

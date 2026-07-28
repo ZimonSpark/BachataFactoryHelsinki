@@ -178,6 +178,15 @@ export async function adjustReceivedCount(token, delta) {
   await firestore.updateDoc(ref, { receivedNominationCount: Math.max(0, current + delta) });
 }
 
+export async function setContacted(token, contacted) {
+  if (MOCK_MODE) {
+    mockDancers.get(token).contacted = contacted;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.updateDoc(firestore.doc(db, "dancers", token), { contacted });
+}
+
 export async function deleteDancer(token, nameKey) {
   if (MOCK_MODE) {
     mockDancers.delete(token);

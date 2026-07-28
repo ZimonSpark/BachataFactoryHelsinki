@@ -29,6 +29,7 @@
       adjustReceivedCount,
       addDancerManually,
       deleteDancer,
+      setContacted,
     } from "./js/data.js";
     import { escapeHtml, formatDate } from "./js/util.js";
 
@@ -52,6 +53,15 @@
               <span class="badge">${d.receivedNominationCount || 0}</span>
               <button class="secondary" data-incr="${escapeHtml(d.id)}" aria-label="Increase nominations">+</button>
             </span>
+            <button
+              class="secondary icon-button contact-toggle${d.contacted ? " contacted" : ""}"
+              data-contact="${escapeHtml(d.id)}"
+              data-contacted="${d.contacted ? "true" : "false"}"
+              aria-label="${d.contacted ? "Mark as not contacted" : "Mark as contacted"}"
+              title="${d.contacted ? "Contacted" : "Not contacted yet"}"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line></svg>
+            </button>
             <button class="secondary" data-copy="${inviteUrl(d.id)}">Copy link</button>
             ${!approved ? `<button data-approve="${escapeHtml(d.id)}">Approve</button>` : ""}
             <button class="secondary icon-button" data-delete="${escapeHtml(d.id)}" data-name-key="${escapeHtml(d.nameKey || "")}" aria-label="Delete nomination" title="Delete nomination">&#128465;</button>
@@ -116,6 +126,14 @@
         btn.addEventListener("click", async () => {
           btn.disabled = true;
           await adjustReceivedCount(btn.dataset.decr, -1);
+          renderDashboard();
+        });
+      });
+      content.querySelectorAll("[data-contact]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const nowContacted = btn.dataset.contacted !== "true";
+          btn.disabled = true;
+          await setContacted(btn.dataset.contact, nowContacted);
           renderDashboard();
         });
       });
