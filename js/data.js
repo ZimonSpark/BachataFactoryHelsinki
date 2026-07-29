@@ -287,3 +287,67 @@ export async function addDancerManually({ name, contact }) {
   await batch.commit();
   return token;
 }
+
+// Bulk-import helper for nominations collected before the site existed (e.g. an offline
+// spreadsheet). Matches by name like everything else; safe to re-run — merges any new
+// nominator names into an existing record instead of creating a duplicate.
+export async function createPendingNominee({ name, contact, nominatorNames }) {
+  const nameKey = normalizeKey(name);
+  const now = new Date();
+  const newNominators = (nominatorNames || []).map((n) => ({ name: n.trim(), timestamp: now }));
+
+  if (MOCK_MODE) {
+    const existingToken = [...mockDancers.entries()].find(([, d]) => d.nameKey === nameKey)?.[0];
+    if (existingToken) {
+      const d = mockDancers.get(existingToken);
+      const existingNames = new Set((d.receivedNominators || []).map((n) => n.name.toLowerCase()));
+      d.receivedNominators = [...(d.receivedNominators || []), ...newNominators.filter((n) => !existingNames.has(n.name.toLowerCase()))];
+      d.receivedNominationCount = d.receivedNominators.length;
+      return existingToken;
+    }
+    const token = generateToken();
+    mockDancers.set(token, {
+      name: name.trim(),
+      contact: contact.trim(),
+      nameKey,
+      status: "pending",
+      receivedNominationCount: newNominators.length,
+      receivedNominators: newNominators,
+      sentNominationCount: 0,
+      sentNominatedNames: [],
+    });
+    return token;
+  }
+
+  const { db, firestore } = await getFirebase();
+  const indexRef = firestore.doc(db, "nameIndex", nameDocId(nameKey));
+  const indexSnap = await firestore.getDoc(indexRef);
+
+  if (indexSnap.exists()) {
+    const token = indexSnap.data().token;
+    const ref = firestore.doc(db, "dancers", token);
+    const snap = await firestore.getDoc(ref);
+    const existing = snap.data().receivedNominators || [];
+    const existingNames = new Set(existing.map((n) => n.name.toLowerCase()));
+    const updated = [...existing, ...newNominators.filter((n) => !existingNames.has(n.name.toLowerCase()))];
+    await firestore.updateDoc(ref, { receivedNominators: updated, receivedNominationCount: updated.length });
+    return token;
+  }
+
+  const token = generateToken();
+  const batch = firestore.writeBatch(db);
+  batch.set(firestore.doc(db, "dancers", token), {
+    name: name.trim(),
+    contact: contact.trim(),
+    nameKey,
+    status: "pending",
+    receivedNominationCount: newNominators.length,
+    receivedNominators: newNominators,
+    sentNominationCount: 0,
+    sentNominatedNames: [],
+    createdAt: firestore.serverTimestamp(),
+  });
+  batch.set(indexRef, { token });
+  await batch.commit();
+  return token;
+}
