@@ -96,9 +96,12 @@
       `;
     }
 
-    async function renderDashboard() {
-      content.innerHTML = `<p class="muted">Loading dancers&hellip;</p>`;
+    async function renderDashboard({ showLoading = true } = {}) {
+      if (showLoading) {
+        content.innerHTML = `<p class="muted">Loading dancers&hellip;</p>`;
+      }
       const dancers = await listAllDancers();
+      const scrollY = window.scrollY;
 
       content.innerHTML = `
         ${MOCK_MODE ? `<div class="notice info">Local preview mode: showing mock data, nothing is saved.</div>` : ""}
@@ -121,12 +124,13 @@
           <div id="seed-message"></div>
         </div>
       `;
+      window.scrollTo(0, scrollY);
 
       content.querySelectorAll("[data-approve]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           btn.disabled = true;
           await approveDancer(btn.dataset.approve);
-          renderDashboard();
+          renderDashboard({ showLoading: false });
         });
       });
       content.querySelectorAll("[data-add-nominator]").forEach((btn) => {
@@ -136,21 +140,21 @@
           if (!input.value.trim()) return;
           btn.disabled = true;
           await addNominator(token, input.value);
-          renderDashboard();
+          renderDashboard({ showLoading: false });
         });
       });
       content.querySelectorAll("[data-remove-latest]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           btn.disabled = true;
           await removeLatestNominator(btn.dataset.removeLatest);
-          renderDashboard();
+          renderDashboard({ showLoading: false });
         });
       });
       content.querySelectorAll("[data-remove-index]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           btn.disabled = true;
           await removeNominatorAt(btn.dataset.removeIndex, Number(btn.dataset.index));
-          renderDashboard();
+          renderDashboard({ showLoading: false });
         });
       });
       content.querySelectorAll("[data-toggle-edit]").forEach((btn) => {
@@ -164,7 +168,7 @@
           const nowContacted = btn.dataset.contacted !== "true";
           btn.disabled = true;
           await setContacted(btn.dataset.contact, nowContacted);
-          renderDashboard();
+          renderDashboard({ showLoading: false });
         });
       });
       content.querySelectorAll("[data-copy]").forEach((btn) => {
@@ -198,7 +202,7 @@
             clearTimeout(Number(btn.dataset.armTimer));
             btn.disabled = true;
             await deleteDancer(btn.dataset.delete, btn.dataset.nameKey);
-            renderDashboard();
+            renderDashboard({ showLoading: false });
             return;
           }
           btn.dataset.armed = "true";
@@ -218,7 +222,7 @@
         const contact = document.getElementById("seedContact").value;
         try {
           const token = await addDancerManually({ name, contact });
-          await renderDashboard();
+          await renderDashboard({ showLoading: false });
           document.getElementById("seed-message").innerHTML = `<div class="notice success">Created invite for ${escapeHtml(name)}: <span class="invite-link">${inviteUrl(token)}</span></div>`;
         } catch (err) {
           document.getElementById("seed-message").innerHTML = `<div class="notice error">${escapeHtml(err.message)}</div>`;
