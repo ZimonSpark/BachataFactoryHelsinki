@@ -38,6 +38,10 @@
     const content = document.getElementById("content");
     const who = document.getElementById("who");
 
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted) location.reload();
+    });
+
     function inviteUrl(token) {
       return `${location.origin}${location.pathname.replace(/admin\.html$/, "")}invite.html?t=${encodeURIComponent(token)}`;
     }

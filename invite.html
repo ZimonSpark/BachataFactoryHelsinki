@@ -20,6 +20,12 @@
     const content = document.getElementById("content");
     const token = getQueryParam("t");
 
+    // Navigating back here from nominate.html can restore the old cached page (with
+    // stale nomination counts) instead of re-running this script — force a fresh load.
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted) location.reload();
+    });
+
     function renderNotFound() {
       content.innerHTML = `
         <h1>Invite not found</h1>

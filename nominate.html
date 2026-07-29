@@ -21,6 +21,10 @@
     const content = document.getElementById("content");
     const fromToken = getQueryParam("from");
 
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted) location.reload();
+    });
+
     document.getElementById("back-link").addEventListener("click", (e) => {
       e.preventDefault();
       history.back();
