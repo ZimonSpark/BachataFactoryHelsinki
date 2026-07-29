@@ -154,6 +154,36 @@ input:focus {
   content: "\2022  ";
 }
 
+.nominator-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.edit-only {
+  display: none;
+}
+
+.nominator-list.editing .edit-only {
+  display: inline-flex;
+}
+
+.nominator-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.nominator-add-row input[type="text"] {
+  flex: 1;
+}
+
+.nominator-add-row button {
+  flex-shrink: 0;
+}
+
 details summary {
   font-family: "Playfair Display", serif;
   color: var(--text);
@@ -241,18 +271,6 @@ details[open] summary::after {
 
 .status-icon {
   font-size: 1.1rem;
-}
-
-.count-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.count-control button {
-  padding: 0.25rem 0.7rem;
-  font-size: 1rem;
-  line-height: 1;
 }
 
 .dancer-row-main button {

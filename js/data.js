@@ -148,7 +148,7 @@ export async function listAllDancers() {
     const snap = await firestore.getDocs(firestore.collection(db, "dancers"));
     list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
-  return list.sort((a, b) => (b.receivedNominationCount || 0) - (a.receivedNominationCount || 0));
+  return list.sort((a, b) => (b.receivedNominators?.length || 0) - (a.receivedNominators?.length || 0));
 }
 
 export async function approveDancer(token) {
@@ -165,17 +165,79 @@ export async function approveDancer(token) {
   });
 }
 
-export async function adjustReceivedCount(token, delta) {
+function nominatorTimestampMs(entry) {
+  const t = entry?.timestamp;
+  if (t?.toDate) return t.toDate().getTime();
+  const d = new Date(t);
+  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
+function latestNominatorIndex(list) {
+  let best = 0;
+  let bestMs = nominatorTimestampMs(list[0]);
+  for (let i = 1; i < list.length; i++) {
+    const ms = nominatorTimestampMs(list[i]);
+    if (ms >= bestMs) {
+      best = i;
+      bestMs = ms;
+    }
+  }
+  return best;
+}
+
+// Admin-side corrections: every count change is tied to an actual nominator name/timestamp
+// so the received count and the nominators list can never drift apart.
+export async function addNominator(token, nominatorName) {
+  const name = nominatorName.trim();
+  if (!name) return;
+  const entry = { name, timestamp: new Date() };
   if (MOCK_MODE) {
     const d = mockDancers.get(token);
-    d.receivedNominationCount = Math.max(0, d.receivedNominationCount + delta);
+    d.receivedNominators = [...(d.receivedNominators || []), entry];
+    d.receivedNominationCount = d.receivedNominators.length;
     return;
   }
   const { db, firestore } = await getFirebase();
   const ref = firestore.doc(db, "dancers", token);
   const snap = await firestore.getDoc(ref);
-  const current = snap.data().receivedNominationCount || 0;
-  await firestore.updateDoc(ref, { receivedNominationCount: Math.max(0, current + delta) });
+  const updated = [...(snap.data().receivedNominators || []), entry];
+  await firestore.updateDoc(ref, { receivedNominators: updated, receivedNominationCount: updated.length });
+}
+
+export async function removeLatestNominator(token) {
+  if (MOCK_MODE) {
+    const d = mockDancers.get(token);
+    const list = d.receivedNominators || [];
+    if (!list.length) return;
+    const idx = latestNominatorIndex(list);
+    d.receivedNominators = list.filter((_, i) => i !== idx);
+    d.receivedNominationCount = d.receivedNominators.length;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  const ref = firestore.doc(db, "dancers", token);
+  const snap = await firestore.getDoc(ref);
+  const list = snap.data().receivedNominators || [];
+  if (!list.length) return;
+  const idx = latestNominatorIndex(list);
+  const updated = list.filter((_, i) => i !== idx);
+  await firestore.updateDoc(ref, { receivedNominators: updated, receivedNominationCount: updated.length });
+}
+
+export async function removeNominatorAt(token, index) {
+  if (MOCK_MODE) {
+    const d = mockDancers.get(token);
+    const list = d.receivedNominators || [];
+    d.receivedNominators = list.filter((_, i) => i !== index);
+    d.receivedNominationCount = d.receivedNominators.length;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  const ref = firestore.doc(db, "dancers", token);
+  const snap = await firestore.getDoc(ref);
+  const list = snap.data().receivedNominators || [];
+  const updated = list.filter((_, i) => i !== index);
+  await firestore.updateDoc(ref, { receivedNominators: updated, receivedNominationCount: updated.length });
 }
 
 export async function setContacted(token, contacted) {

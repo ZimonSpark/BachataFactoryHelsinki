@@ -26,7 +26,9 @@
       signOutAdmin,
       listAllDancers,
       approveDancer,
-      adjustReceivedCount,
+      addNominator,
+      removeLatestNominator,
+      removeNominatorAt,
       addDancerManually,
       deleteDancer,
       setContacted,
@@ -48,11 +50,7 @@
           <div class="dancer-row-main">
             <span class="status-icon" title="${approved ? "Approved" : "Pending"}">${approved ? "&#9989;" : "&#9203;"}</span>
             <strong class="dancer-name">${escapeHtml(d.name)}</strong>
-            <span class="count-control">
-              <button class="secondary" data-decr="${escapeHtml(d.id)}" aria-label="Decrease nominations">&minus;</button>
-              <span class="badge">${d.receivedNominationCount || 0}</span>
-              <button class="secondary" data-incr="${escapeHtml(d.id)}" aria-label="Increase nominations">+</button>
-            </span>
+            <span class="badge">${nominators.length}</span>
             <button
               class="secondary icon-button contact-toggle${d.contacted ? " contacted" : ""}"
               data-contact="${escapeHtml(d.id)}"
@@ -71,9 +69,25 @@
             <div class="details-body">
               <p class="muted">Contact: ${escapeHtml(d.contact)}</p>
               <p class="invite-link">${inviteUrl(d.id)}</p>
+
+              <label for="nomInput-${escapeHtml(d.id)}">Nominator name</label>
+              <div class="nominator-add-row">
+                <input type="text" id="nomInput-${escapeHtml(d.id)}" placeholder="e.g. Maria Lopez" />
+                <button class="secondary" data-add-nominator="${escapeHtml(d.id)}" aria-label="Add nominator">+</button>
+                <button class="secondary" data-remove-latest="${escapeHtml(d.id)}" aria-label="Remove latest nominator">&minus;</button>
+                <button class="secondary icon-button" data-toggle-edit="${escapeHtml(d.id)}" aria-label="Manage nominators" title="Manage nominators">&#128295;</button>
+              </div>
+
               ${
                 nominators.length
-                  ? `<ul class="nominator-list">${nominators.map((n) => `<li>${escapeHtml(n.name)} &middot; ${formatDate(n.timestamp)}</li>`).join("")}</ul>`
+                  ? `<ul class="nominator-list" data-nominator-list="${escapeHtml(d.id)}">${nominators
+                      .map(
+                        (n, i) => `<li>
+                          <span>${escapeHtml(n.name)} &middot; ${formatDate(n.timestamp)}</span>
+                          <button class="secondary icon-button edit-only" data-remove-index="${escapeHtml(d.id)}" data-index="${i}" aria-label="Remove this nominator">&times;</button>
+                        </li>`
+                      )
+                      .join("")}</ul>`
                   : `<p class="muted">No nominators on record.</p>`
               }
             </div>
@@ -115,18 +129,34 @@
           renderDashboard();
         });
       });
-      content.querySelectorAll("[data-incr]").forEach((btn) => {
+      content.querySelectorAll("[data-add-nominator]").forEach((btn) => {
         btn.addEventListener("click", async () => {
+          const token = btn.dataset.addNominator;
+          const input = document.getElementById(`nomInput-${token}`);
+          if (!input.value.trim()) return;
           btn.disabled = true;
-          await adjustReceivedCount(btn.dataset.incr, 1);
+          await addNominator(token, input.value);
           renderDashboard();
         });
       });
-      content.querySelectorAll("[data-decr]").forEach((btn) => {
+      content.querySelectorAll("[data-remove-latest]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           btn.disabled = true;
-          await adjustReceivedCount(btn.dataset.decr, -1);
+          await removeLatestNominator(btn.dataset.removeLatest);
           renderDashboard();
+        });
+      });
+      content.querySelectorAll("[data-remove-index]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          await removeNominatorAt(btn.dataset.removeIndex, Number(btn.dataset.index));
+          renderDashboard();
+        });
+      });
+      content.querySelectorAll("[data-toggle-edit]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const list = content.querySelector(`[data-nominator-list="${btn.dataset.toggleEdit}"]`);
+          list?.classList.toggle("editing");
         });
       });
       content.querySelectorAll("[data-contact]").forEach((btn) => {
