@@ -43,7 +43,10 @@
     });
 
     function inviteUrl(token) {
-      return `${location.origin}${location.pathname.replace(/admin\.html$/, "")}invite.html?t=${encodeURIComponent(token)}`;
+      // Built from a fixed root path rather than the current URL — admin.html can be
+      // reached as "/admin" (no extension) via GitHub Pages' clean-URL serving, which
+      // broke naive path-stripping (produced "/admininvite.html").
+      return `${location.origin}/invite.html?t=${encodeURIComponent(token)}`;
     }
 
     function dancerRow(d) {
