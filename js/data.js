@@ -56,9 +56,17 @@ export async function updateOwnName(token, firstName, lastName) {
   }
 
   const { db, firestore } = await getFirebase();
+  const indexRef = firestore.doc(db, "nameIndex", nameDocId(nameKey));
+  const indexSnap = await firestore.getDoc(indexRef);
+
   const batch = firestore.writeBatch(db);
   batch.update(firestore.doc(db, "dancers", token), { name, nameKey });
-  batch.set(firestore.doc(db, "nameIndex", nameDocId(nameKey)), { token });
+  // Only write the index if this exact nameKey is genuinely new — writing to an existing
+  // doc is an "update" under the rules (admin-only), even via set(), and a name that was
+  // used before (e.g. reverting an edit) would already have one.
+  if (!indexSnap.exists()) {
+    batch.set(indexRef, { token });
+  }
   await batch.commit();
 }
 
