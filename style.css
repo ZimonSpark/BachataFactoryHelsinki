@@ -184,6 +184,23 @@ input:focus {
   flex-shrink: 0;
 }
 
+.name-form-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.name-form-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .name-form-row {
+    flex-direction: column;
+  }
+}
+
 details summary {
   font-family: "Playfair Display", serif;
   color: var(--text);

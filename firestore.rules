@@ -28,7 +28,7 @@ service cloud.firestore {
       allow list: if isAdmin();
 
       allow create: if isAdmin() || isNewNomineeCreate();
-      allow update: if isAdmin() || isReceivedIncrement() || isSentIncrement();
+      allow update: if isAdmin() || isReceivedIncrement() || isSentIncrement() || isSelfNameUpdate();
       allow delete: if isAdmin();
 
       // First time this person has ever been nominated: creates their record as 'pending'.
@@ -70,6 +70,15 @@ service cloud.firestore {
           && after.sentNominationCount == before.get('sentNominationCount', 0) + 1
           && after.sentNominationCount <= 10
           && after.sentNominatedNames.size() == before.get('sentNominatedNames', []).size() + 1;
+      }
+
+      // A dancer editing their own display name from their invite page (e.g. filling in
+      // a proper first/last name in place of a nickname). Only these two fields may move.
+      function isSelfNameUpdate() {
+        let after = request.resource.data;
+        return after.diff(resource.data).affectedKeys().hasOnly(['name', 'nameKey'])
+          && after.name is string && after.name.size() > 0 && after.name.size() <= 200
+          && after.nameKey is string && after.nameKey.size() > 0;
       }
     }
 

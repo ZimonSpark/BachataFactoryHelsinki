@@ -41,6 +41,27 @@ export async function getDancerByToken(token) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
+// Lets a dancer fill in their proper name from their own invite page. Also refreshes the
+// nameIndex so future nominations-by-name match this record under the new name too.
+export async function updateOwnName(token, firstName, lastName) {
+  const name = `${firstName.trim()} ${lastName.trim()}`.trim();
+  if (!name) return;
+  const nameKey = normalizeKey(name);
+
+  if (MOCK_MODE) {
+    const d = mockDancers.get(token);
+    d.name = name;
+    d.nameKey = nameKey;
+    return;
+  }
+
+  const { db, firestore } = await getFirebase();
+  const batch = firestore.writeBatch(db);
+  batch.update(firestore.doc(db, "dancers", token), { name, nameKey });
+  batch.set(firestore.doc(db, "nameIndex", nameDocId(nameKey)), { token });
+  await batch.commit();
+}
+
 // Nominator is the already-fetched dancer record for the person submitting the nomination
 // (looked up via their own invite token) — their name is trusted from that record, never
 // typed in by hand.

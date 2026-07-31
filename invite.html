@@ -14,7 +14,7 @@
   </main>
 
   <script type="module">
-    import { getDancerByToken } from "./js/data.js";
+    import { getDancerByToken, updateOwnName } from "./js/data.js";
     import { escapeHtml, getQueryParam } from "./js/util.js";
 
     const content = document.getElementById("content");
@@ -46,6 +46,9 @@
     function renderInvite(dancer, token) {
       const sentCount = dancer.sentNominationCount || 0;
       const sentNames = dancer.sentNominatedNames || [];
+      const nameParts = (dancer.name || "").trim().split(/\s+/);
+      const firstGuess = nameParts[0] || "";
+      const lastGuess = nameParts.slice(1).join(" ");
       content.innerHTML = `
         <h1>Hello ${escapeHtml(dancer.name)}, you have been nominated</h1>
         <p class="tagline">You're invited to Bachata Factory Helsinki, a peer-driven project for bachata dancers.</p>
@@ -56,6 +59,19 @@
           </p>
           <p class="muted">BFH runs weekly in Vallila starting mid-September.</p>
           <a class="button secondary" href="index.html">Discover more</a>
+        </div>
+        <div class="card">
+          <p class="muted">To help the organizers, please insert your full name</p>
+          <form id="name-form">
+            <div class="name-form-row">
+              <input type="text" id="firstName" placeholder="First Name" value="${escapeHtml(firstGuess)}" required />
+              <input type="text" id="lastName" placeholder="Last Name" value="${escapeHtml(lastGuess)}" required />
+            </div>
+            <div class="actions">
+              <button type="submit">Save</button>
+            </div>
+          </form>
+          <div id="name-message"></div>
         </div>
         <div class="card">
           <h2 style="font-size: 1.2rem">Know someone who belongs here too?</h2>
@@ -76,6 +92,23 @@
           }
         </div>
       `;
+
+      document.getElementById("name-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const firstName = document.getElementById("firstName").value;
+        const lastName = document.getElementById("lastName").value;
+        const messageEl = document.getElementById("name-message");
+        const submitBtn = e.target.querySelector("button[type=submit]");
+
+        submitBtn.disabled = true;
+        try {
+          await updateOwnName(token, firstName, lastName);
+          messageEl.innerHTML = `<div class="notice success">Saved, thank you!</div>`;
+        } catch (err) {
+          messageEl.innerHTML = `<div class="notice error">Something went wrong: ${escapeHtml(err.message)}</div>`;
+        }
+        submitBtn.disabled = false;
+      });
     }
 
     if (!token) {
