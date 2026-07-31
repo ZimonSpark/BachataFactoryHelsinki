@@ -6,6 +6,9 @@ import { firebaseConfig, isConfigured, ADMIN_EMAIL } from "./firebase-config.js"
 import { generateToken, normalizeKey } from "./util.js";
 import { mockDancers } from "./mock-data.js";
 
+// Ephemeral, mock-mode-only audit trail (resets on reload, same as the rest of mock state).
+const mockNameChangeLog = [];
+
 const SDK = "https://www.gstatic.com/firebasejs/10.13.2";
 
 export const MOCK_MODE = !isConfigured;
@@ -42,7 +45,9 @@ export async function getDancerByToken(token) {
 }
 
 // Lets a dancer fill in their proper name from their own invite page. Also refreshes the
-// nameIndex so future nominations-by-name match this record under the new name too.
+// nameIndex so future nominations-by-name match this record under the new name too, and
+// logs the before/after to nameChangeLog so the admin can spot misuse (e.g. someone
+// overwriting their name with a different real person's name).
 export async function updateOwnName(token, firstName, lastName) {
   const name = `${firstName.trim()} ${lastName.trim()}`.trim();
   if (!name) return;
@@ -50,24 +55,54 @@ export async function updateOwnName(token, firstName, lastName) {
 
   if (MOCK_MODE) {
     const d = mockDancers.get(token);
+    const oldName = d.name;
     d.name = name;
     d.nameKey = nameKey;
+    if (oldName !== name) {
+      mockNameChangeLog.push({ token, oldName, newName: name, timestamp: new Date().toISOString() });
+    }
     return;
   }
 
   const { db, firestore } = await getFirebase();
+  const dancerRef = firestore.doc(db, "dancers", token);
+  const dancerSnap = await firestore.getDoc(dancerRef);
+  const oldName = dancerSnap.data()?.name || "";
+
   const indexRef = firestore.doc(db, "nameIndex", nameDocId(nameKey));
   const indexSnap = await firestore.getDoc(indexRef);
 
   const batch = firestore.writeBatch(db);
-  batch.update(firestore.doc(db, "dancers", token), { name, nameKey });
+  batch.update(dancerRef, { name, nameKey });
   // Only write the index if this exact nameKey is genuinely new — writing to an existing
   // doc is an "update" under the rules (admin-only), even via set(), and a name that was
   // used before (e.g. reverting an edit) would already have one.
   if (!indexSnap.exists()) {
     batch.set(indexRef, { token });
   }
+  if (oldName !== name) {
+    batch.set(firestore.doc(firestore.collection(db, "nameChangeLog")), {
+      token,
+      oldName,
+      newName: name,
+      timestamp: firestore.serverTimestamp(),
+    });
+  }
   await batch.commit();
+}
+
+export async function listNameChangeLog() {
+  if (MOCK_MODE) {
+    return [...mockNameChangeLog].reverse();
+  }
+  const { db, firestore } = await getFirebase();
+  const q = firestore.query(
+    firestore.collection(db, "nameChangeLog"),
+    firestore.orderBy("timestamp", "desc"),
+    firestore.limit(200)
+  );
+  const snap = await firestore.getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
 // Nominator is the already-fetched dancer record for the person submitting the nomination

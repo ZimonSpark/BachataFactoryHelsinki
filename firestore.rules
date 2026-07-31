@@ -93,5 +93,19 @@ service cloud.firestore {
                     || (request.resource.data.keys().hasOnly(['token']) && request.resource.data.token is string);
       allow update, delete: if isAdmin();
     }
+
+    // Audit trail of self-service name edits, so the admin can spot misuse (e.g. someone
+    // overwriting their name with a different real person's name). Write-only for the
+    // public — only the admin can read it back.
+    match /nameChangeLog/{id} {
+      allow get, list: if isAdmin();
+      allow create: if isAdmin()
+                    || (request.resource.data.keys().hasOnly(['token', 'oldName', 'newName', 'timestamp'])
+                        && request.resource.data.token is string
+                        && request.resource.data.oldName is string
+                        && request.resource.data.newName is string
+                        && request.resource.data.timestamp == request.time);
+      allow update, delete: if isAdmin();
+    }
   }
 }

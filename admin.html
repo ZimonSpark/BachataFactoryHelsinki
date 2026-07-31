@@ -32,6 +32,7 @@
       addDancerManually,
       deleteDancer,
       setContacted,
+      listNameChangeLog,
     } from "./js/data.js";
     import { escapeHtml, formatDate } from "./js/util.js";
 
@@ -103,11 +104,20 @@
       `;
     }
 
+    function nameLogRow(entry) {
+      return `
+        <li>
+          ${formatDate(entry.timestamp)} &middot; ${escapeHtml(entry.oldName || "(none)")} &rarr; ${escapeHtml(entry.newName)}
+          <span class="muted">(${escapeHtml(entry.token)})</span>
+        </li>
+      `;
+    }
+
     async function renderDashboard({ showLoading = true } = {}) {
       if (showLoading) {
         content.innerHTML = `<p class="muted">Loading dancers&hellip;</p>`;
       }
-      const dancers = await listAllDancers();
+      const [dancers, nameLog] = await Promise.all([listAllDancers(), listNameChangeLog()]);
       const scrollY = window.scrollY;
 
       content.innerHTML = `
@@ -115,6 +125,18 @@
         <div class="card">
           <h2 style="font-size:1.2rem">Nominated dancers</h2>
           ${dancers.length ? dancers.map(dancerRow).join("") : `<p class="muted">No one has been nominated yet.</p>`}
+        </div>
+        <div class="card">
+          <details>
+            <summary style="font-size:1.2rem">Name change log${nameLog.length ? ` (${nameLog.length})` : ""}</summary>
+            <div class="details-body">
+              ${
+                nameLog.length
+                  ? `<ul class="nominator-list">${nameLog.map(nameLogRow).join("")}</ul>`
+                  : `<p class="muted">No name changes yet.</p>`
+              }
+            </div>
+          </details>
         </div>
         <div class="card">
           <h2 style="font-size:1.2rem">Add a dancer manually</h2>
