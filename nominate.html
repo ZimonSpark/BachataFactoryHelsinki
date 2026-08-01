@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nominate someone · Bachata Factory Helsinki</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
   <main class="page">
@@ -17,9 +18,30 @@
   <script type="module">
     import { getDancerByToken, submitNomination, MAX_SENT_NOMINATIONS } from "./js/data.js";
     import { escapeHtml, getQueryParam } from "./js/util.js";
+    import { emailjsConfig, isEmailConfigured } from "./js/notify-config.js";
 
     const content = document.getElementById("content");
     const fromToken = getQueryParam("from");
+
+    if (isEmailConfigured) {
+      emailjs.init({ publicKey: emailjsConfig.publicKey });
+    }
+
+    // Best-effort admin notification — a failure here should never block the nomination
+    // itself, which is already safely stored in Firestore by this point.
+    async function notifyAdmin({ nomineeName, nomineeContact, nominatorName }) {
+      if (!isEmailConfigured) return;
+      try {
+        await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, {
+          nominee_name: nomineeName,
+          nominee_contact: nomineeContact,
+          nominator_name: nominatorName,
+          admin_link: `${location.origin}/admin.html`,
+        });
+      } catch (err) {
+        console.error("Nomination email notification failed:", err);
+      }
+    }
 
     window.addEventListener("pageshow", (e) => {
       if (e.persisted) location.reload();
@@ -88,6 +110,7 @@
         submitBtn.disabled = true;
         try {
           await submitNomination({ nomineeName, nomineeContact, nominator });
+          notifyAdmin({ nomineeName, nomineeContact, nominatorName: nominator.name });
           content.innerHTML = `
             <h1>Nomination submitted</h1>
             <div class="notice success">
