@@ -29,12 +29,13 @@
       addNominator,
       removeLatestNominator,
       removeNominatorAt,
+      resetNominationTimer,
       addDancerManually,
       deleteDancer,
       setContacted,
       listNameChangeLog,
     } from "./js/data.js";
-    import { escapeHtml, formatDate } from "./js/util.js";
+    import { escapeHtml, formatDate, nominationDeadlineMs, formatCountdown } from "./js/util.js";
 
     const content = document.getElementById("content");
     const who = document.getElementById("who");
@@ -50,9 +51,20 @@
       return `${location.origin}/invite.html?t=${encodeURIComponent(token)}`;
     }
 
+    function adminCountdownText(deadlineMs, sentCount) {
+      const remaining = formatCountdown(deadlineMs);
+      if (!remaining) {
+        return `Nomination window closed${sentCount < 5 ? ` &mdash; only ${sentCount}/5 nominated` : ""}.`;
+      }
+      return sentCount >= 5
+        ? `${remaining} left &middot; already qualified (${sentCount} nominated)`
+        : `${remaining} left &middot; ${sentCount}/5 nominated`;
+    }
+
     function dancerRow(d) {
       const approved = d.status === "approved";
       const nominators = d.receivedNominators || [];
+      const deadlineMs = approved ? nominationDeadlineMs(d.approvedAt) : null;
       return `
         <div class="dancer-row" data-token="${escapeHtml(d.id)}">
           <div class="dancer-row-main">
@@ -75,6 +87,16 @@
           <details>
             <summary>Details</summary>
             <div class="details-body">
+              ${
+                deadlineMs !== null
+                  ? `<div class="countdown-row">
+                      <p class="countdown-admin${formatCountdown(deadlineMs) ? "" : " expired"}" data-deadline="${deadlineMs}" data-sent-count="${d.sentNominationCount || 0}">${adminCountdownText(deadlineMs, d.sentNominationCount || 0)}</p>
+                      <button class="secondary icon-button" data-reset-timer="${escapeHtml(d.id)}" aria-label="Reset 48-hour timer" title="Reset 48-hour timer">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                      </button>
+                    </div>`
+                  : `<p class="muted">Countdown starts once approved.</p>`
+              }
               <p class="muted">Contact: ${escapeHtml(d.contact)}</p>
               <p class="invite-link">${inviteUrl(d.id)}</p>
 
@@ -169,6 +191,13 @@
           if (!input.value.trim()) return;
           btn.disabled = true;
           await addNominator(token, input.value);
+          renderDashboard({ showLoading: false });
+        });
+      });
+      content.querySelectorAll("[data-reset-timer]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          await resetNominationTimer(btn.dataset.resetTimer);
           renderDashboard({ showLoading: false });
         });
       });
@@ -276,6 +305,17 @@
       `;
       document.getElementById("signout").addEventListener("click", () => signOutAdmin());
     }
+
+    // Queries the live DOM each tick rather than caching nodes, so it stays correct across
+    // the full re-renders that every admin action (approve, add nominator, delete...) triggers.
+    setInterval(() => {
+      content.querySelectorAll("[data-deadline]").forEach((el) => {
+        const deadlineMs = Number(el.dataset.deadline);
+        const sentCount = Number(el.dataset.sentCount || 0);
+        el.textContent = adminCountdownText(deadlineMs, sentCount);
+        el.classList.toggle("expired", !formatCountdown(deadlineMs));
+      });
+    }, 1000);
 
     if (MOCK_MODE) {
       who.textContent = "local preview";

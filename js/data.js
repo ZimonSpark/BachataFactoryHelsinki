@@ -229,6 +229,19 @@ export async function approveDancer(token) {
   });
 }
 
+// Restarts the 48-hour nomination window for an already-approved dancer, e.g. when the
+// admin wants to give them a fresh 48 hours after contacting them again.
+export async function resetNominationTimer(token) {
+  if (MOCK_MODE) {
+    mockDancers.get(token).approvedAt = new Date().toISOString();
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.updateDoc(firestore.doc(db, "dancers", token), {
+    approvedAt: firestore.serverTimestamp(),
+  });
+}
+
 function nominatorTimestampMs(entry) {
   const t = entry?.timestamp;
   if (t?.toDate) return t.toDate().getTime();

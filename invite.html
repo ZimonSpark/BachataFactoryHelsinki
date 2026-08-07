@@ -15,7 +15,7 @@
 
   <script type="module">
     import { getDancerByToken, updateOwnName } from "./js/data.js";
-    import { escapeHtml, getQueryParam } from "./js/util.js";
+    import { escapeHtml, getQueryParam, nominationDeadlineMs, formatCountdown } from "./js/util.js";
 
     const content = document.getElementById("content");
     const token = getQueryParam("t");
@@ -51,7 +51,8 @@
       const lastGuess = nameParts.slice(1).join(" ");
       content.innerHTML = `
         <h1>Hello ${escapeHtml(dancer.name)}, you have been nominated</h1>
-        <p class="tagline">You're invited to Bachata Factory Helsinki, a peer-driven project for bachata dancers.</p>
+        <p class="tagline tagline--tight">You're invited to Bachata Factory Helsinki, a peer-driven project for bachata dancers.</p>
+        <p class="countdown-box" id="countdown-box"></p>
         <div class="card">
           <p>
             Someone who's already part of this circle nominated you personally. This isn't a
@@ -59,6 +60,69 @@
           </p>
           <p class="muted">BFH runs weekly in Vallila starting mid-September.</p>
           <a class="button secondary" href="index.html">Discover more</a>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 5h18v14H3z"></path>
+                <path d="m3 5 9 7 9-7"></path>
+                <path d="M12 15.6c-1.9-1.4-3.1-2.5-3.1-3.9a1.8 1.8 0 0 1 3.1-1.2 1.8 1.8 0 0 1 3.1 1.2c0 1.4-1.2 2.5-3.1 3.9z" fill="currentColor" stroke="none"></path>
+              </svg>
+            </div>
+            <p class="step-label">Get invited</p>
+            <p class="step-desc">You've been personally invited by someone already in the circle.</p>
+          </div>
+          <div class="step-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"></line><polyline points="14 6 20 12 14 18"></polyline></svg>
+          </div>
+          <div class="step">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 5.5A2.5 2.5 0 0 1 4.5 3h9A2.5 2.5 0 0 1 16 5.5v6a2.5 2.5 0 0 1-2.5 2.5H8l-3.5 3v-3H4.5A2.5 2.5 0 0 1 2 11.5z"></path>
+                <line x1="5" y1="7" x2="12" y2="7"></line>
+                <line x1="5" y1="9.5" x2="10" y2="9.5"></line>
+                <circle cx="17.5" cy="6.5" r="2.8" fill="currentColor" stroke="none"></circle>
+                <line x1="17.5" y1="1.3" x2="17.5" y2="2.4"></line>
+                <line x1="21.1" y1="2.9" x2="20.3" y2="3.7"></line>
+                <line x1="22.5" y1="6.5" x2="21.4" y2="6.5"></line>
+                <line x1="13.9" y1="2.9" x2="14.7" y2="3.7"></line>
+              </svg>
+            </div>
+            <p class="step-label">Recommend dancers</p>
+            <p class="step-desc">Nominate 5&ndash;10 dancers you'd gladly get feedback from.</p>
+          </div>
+          <div class="step-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"></line><polyline points="14 6 20 12 14 18"></polyline></svg>
+          </div>
+          <div class="step">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <defs>
+                  <clipPath id="flagClip">
+                    <path d="M4 3c3-1.6 5 1.6 8 0s5 1.6 8 0v9c-3 1.6-5-1.6-8 0s-5-1.6-8 0z"></path>
+                  </clipPath>
+                </defs>
+                <line x1="4" y1="2" x2="4" y2="22"></line>
+                <path d="M4 3c3-1.6 5 1.6 8 0s5 1.6 8 0v9c-3 1.6-5-1.6-8 0s-5-1.6-8 0z"></path>
+                <g clip-path="url(#flagClip)" fill="currentColor" stroke="none">
+                  <rect x="4" y="3" width="2.7" height="2.7"></rect>
+                  <rect x="9.3" y="3" width="2.7" height="2.7"></rect>
+                  <rect x="14.6" y="3" width="2.7" height="2.7"></rect>
+                  <rect x="19.9" y="3" width="2.7" height="2.7"></rect>
+                  <rect x="6.6" y="5.7" width="2.7" height="2.7"></rect>
+                  <rect x="11.9" y="5.7" width="2.7" height="2.7"></rect>
+                  <rect x="17.2" y="5.7" width="2.7" height="2.7"></rect>
+                  <rect x="4" y="8.4" width="2.7" height="2.7"></rect>
+                  <rect x="9.3" y="8.4" width="2.7" height="2.7"></rect>
+                  <rect x="14.6" y="8.4" width="2.7" height="2.7"></rect>
+                  <rect x="19.9" y="8.4" width="2.7" height="2.7"></rect>
+                </g>
+              </svg>
+            </div>
+            <p class="step-label">Wait for the deadline</p>
+            <p class="step-desc">You have 48 hours from your approval to submit your nominations.</p>
+          </div>
         </div>
         <div class="card">
           <p class="muted">To help the organizers, please insert your full name</p>
@@ -92,6 +156,32 @@
           }
         </div>
       `;
+
+      const deadlineMs = nominationDeadlineMs(dancer.approvedAt);
+      const countdownBox = document.getElementById("countdown-box");
+      let countdownTimer;
+      function renderCountdown() {
+        if (deadlineMs === null) {
+          countdownBox.style.display = "none";
+          return;
+        }
+        const remaining = formatCountdown(deadlineMs);
+        if (!remaining) {
+          countdownBox.className = "countdown-box expired";
+          countdownBox.textContent = "Your 48-hour nomination window has closed.";
+          clearInterval(countdownTimer);
+          return;
+        }
+        if (sentCount >= 5) {
+          countdownBox.className = "countdown-box done";
+          countdownBox.innerHTML = `You've nominated ${sentCount} &mdash; you're all set. Window closes in <strong>${remaining}</strong>.`;
+        } else {
+          countdownBox.className = "countdown-box";
+          countdownBox.innerHTML = `You have <strong>${remaining}</strong> left to nominate at least 5 dancers.`;
+        }
+      }
+      renderCountdown();
+      countdownTimer = setInterval(renderCountdown, 1000);
 
       document.getElementById("name-form").addEventListener("submit", async (e) => {
         e.preventDefault();
