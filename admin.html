@@ -64,6 +64,7 @@
     function dancerRow(d) {
       const approved = d.status === "approved";
       const nominators = d.receivedNominators || [];
+      const sentNames = d.sentNominatedNames || [];
       const deadlineMs = approved ? nominationDeadlineMs(d.approvedAt) : null;
       return `
         <div class="dancer-row" data-token="${escapeHtml(d.id)}">
@@ -119,6 +120,13 @@
                       )
                       .join("")}</ul>`
                   : `<p class="muted">No nominators on record.</p>`
+              }
+
+              <p class="muted" style="margin-top: 1rem">Nominated by them: ${d.sentNominationCount || 0}/10</p>
+              ${
+                sentNames.length
+                  ? `<ul class="nominator-list">${sentNames.map((n) => `<li>${escapeHtml(n)}</li>`).join("")}</ul>`
+                  : `<p class="muted">Hasn't nominated anyone yet.</p>`
               }
             </div>
           </details>
