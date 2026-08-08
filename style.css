@@ -249,6 +249,21 @@ input:focus {
   font-weight: 600;
 }
 
+.qualified-badge {
+  border: none;
+  cursor: pointer;
+  padding: 0.15rem 0.65rem !important;
+  font-size: 0.8rem !important;
+}
+
+.qualified-badge.qualified-green {
+  background: var(--green-deep);
+}
+
+.qualified-badge.qualified-red {
+  background: var(--danger);
+}
+
 .nominator-list {
   list-style: none;
   padding: 0;
