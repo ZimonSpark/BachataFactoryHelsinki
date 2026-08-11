@@ -169,8 +169,28 @@
       const [dancers, nameLog] = await Promise.all([listAllDancers(), listNameChangeLog()]);
       const scrollY = window.scrollY;
 
+      const totalCount = dancers.length;
+      const waitingApprovalCount = dancers.filter((d) => d.status !== "approved" && !d.flaggedRed).length;
+      const waitingConnectionCount = dancers.filter((d) => !d.contacted && !d.flaggedRed).length;
+
       content.innerHTML = `
         ${MOCK_MODE ? `<div class="notice info">Local preview mode: showing mock data, nothing is saved.</div>` : ""}
+        <div class="card">
+          <div class="stats-row">
+            <div class="stat">
+              <span class="stat-number">${totalCount}</span>
+              <span class="stat-label">Total nominations</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${waitingApprovalCount}</span>
+              <span class="stat-label">Waiting for approval</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${waitingConnectionCount}</span>
+              <span class="stat-label">Waiting for connection</span>
+            </div>
+          </div>
+        </div>
         <div class="card">
           <h2 style="font-size:1.2rem">Nominated dancers</h2>
           ${dancers.length ? dancers.map(dancerRow).join("") : `<p class="muted">No one has been nominated yet.</p>`}

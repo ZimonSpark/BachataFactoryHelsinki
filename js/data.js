@@ -212,7 +212,12 @@ export async function listAllDancers() {
     const snap = await firestore.getDocs(firestore.collection(db, "dancers"));
     list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
-  return list.sort((a, b) => (b.receivedNominators?.length || 0) - (a.receivedNominators?.length || 0));
+  return list.sort((a, b) => {
+    const aFlagged = a.flaggedRed ? 1 : 0;
+    const bFlagged = b.flaggedRed ? 1 : 0;
+    if (aFlagged !== bFlagged) return aFlagged - bFlagged;
+    return (b.receivedNominators?.length || 0) - (a.receivedNominators?.length || 0);
+  });
 }
 
 export async function approveDancer(token) {
