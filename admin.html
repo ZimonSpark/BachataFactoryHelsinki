@@ -34,6 +34,7 @@
       deleteDancer,
       setContacted,
       setQualifiedOverride,
+      setFlaggedRed,
       listNameChangeLog,
     } from "./js/data.js";
     import { escapeHtml, formatDate, nominationDeadlineMs, formatCountdown } from "./js/util.js";
@@ -68,11 +69,22 @@
       const sentNames = d.sentNominatedNames || [];
       const sentCount = d.sentNominationCount || 0;
       const qualifiedGreen = typeof d.qualifiedOverride === "boolean" ? d.qualifiedOverride : sentCount >= 5;
+      const flaggedRed = !!d.flaggedRed;
       const deadlineMs = approved ? nominationDeadlineMs(d.approvedAt) : null;
       return `
         <div class="dancer-row" data-token="${escapeHtml(d.id)}">
           <div class="dancer-row-main">
-            <span class="status-icon" title="${approved ? "Approved" : "Pending"}">${approved ? "&#9989;" : "&#9203;"}</span>
+            ${
+              approved
+                ? `<span class="status-icon" title="Approved">&#9989;</span>`
+                : `<button
+                    class="status-toggle"
+                    data-toggle-pending="${escapeHtml(d.id)}"
+                    data-flagged="${flaggedRed ? "true" : "false"}"
+                    aria-label="${flaggedRed ? "Flagged — click to show hourglass" : "Pending — click to flag red"}"
+                    title="${flaggedRed ? "Flagged" : "Pending"} &middot; click to toggle"
+                  >${flaggedRed ? "&#10060;" : "&#9203;"}</button>`
+            }
             <strong class="dancer-name">${escapeHtml(d.name)}</strong>
             <button
               class="badge qualified-badge ${qualifiedGreen ? "qualified-green" : "qualified-red"}"
@@ -206,6 +218,14 @@
           if (!input.value.trim()) return;
           btn.disabled = true;
           await addNominator(token, input.value);
+          renderDashboard({ showLoading: false });
+        });
+      });
+      content.querySelectorAll("[data-toggle-pending]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const nowFlagged = btn.dataset.flagged !== "true";
+          btn.disabled = true;
+          await setFlaggedRed(btn.dataset.togglePending, nowFlagged);
           renderDashboard({ showLoading: false });
         });
       });

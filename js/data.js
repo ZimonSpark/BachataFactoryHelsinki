@@ -337,6 +337,17 @@ export async function setQualifiedOverride(token, qualified) {
   await firestore.updateDoc(firestore.doc(db, "dancers", token), { qualifiedOverride: qualified });
 }
 
+// Manual flag for a still-pending dancer, so the admin can mark one with a red X (e.g. to
+// note a rejection) instead of the default hourglass, purely as a visual reminder.
+export async function setFlaggedRed(token, flagged) {
+  if (MOCK_MODE) {
+    mockDancers.get(token).flaggedRed = flagged;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.updateDoc(firestore.doc(db, "dancers", token), { flaggedRed: flagged });
+}
+
 export async function deleteDancer(token, nameKey) {
   if (MOCK_MODE) {
     mockDancers.delete(token);

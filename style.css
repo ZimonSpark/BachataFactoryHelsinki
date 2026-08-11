@@ -412,6 +412,20 @@ details[open] summary::after {
   font-size: 1.1rem;
 }
 
+.status-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 !important;
+  font-size: 1.1rem !important;
+}
+
+.status-toggle:hover {
+  background: none;
+  transform: none;
+}
+
 .dancer-row-main button {
   padding: 0.4rem 0.9rem;
   font-size: 0.85rem;
