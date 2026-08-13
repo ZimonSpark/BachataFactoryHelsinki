@@ -353,6 +353,17 @@ export async function setFlaggedRed(token, flagged) {
   await firestore.updateDoc(firestore.doc(db, "dancers", token), { flaggedRed: flagged });
 }
 
+// Moves an approved dancer between the "Nominated dancers" and "Dancers in the team"
+// sections on the admin dashboard.
+export async function setInTeam(token, inTeam) {
+  if (MOCK_MODE) {
+    mockDancers.get(token).inTeam = inTeam;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.updateDoc(firestore.doc(db, "dancers", token), { inTeam });
+}
+
 export async function deleteDancer(token, nameKey) {
   if (MOCK_MODE) {
     mockDancers.delete(token);

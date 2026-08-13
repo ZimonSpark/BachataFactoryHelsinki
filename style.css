@@ -293,6 +293,10 @@ input:focus {
   background: var(--danger);
 }
 
+.team-toggle.in-team {
+  background: var(--green-deep);
+}
+
 .nominator-list {
   list-style: none;
   padding: 0;

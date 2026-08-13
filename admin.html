@@ -35,6 +35,7 @@
       setContacted,
       setQualifiedOverride,
       setFlaggedRed,
+      setInTeam,
       listNameChangeLog,
     } from "./js/data.js";
     import { escapeHtml, formatDate, nominationDeadlineMs, formatCountdown } from "./js/util.js";
@@ -70,6 +71,7 @@
       const sentCount = d.sentNominationCount || 0;
       const qualifiedGreen = typeof d.qualifiedOverride === "boolean" ? d.qualifiedOverride : sentCount >= 5;
       const flaggedRed = !!d.flaggedRed;
+      const inTeam = !!d.inTeam;
       const deadlineMs = approved ? nominationDeadlineMs(d.approvedAt) : null;
       return `
         <div class="dancer-row" data-token="${escapeHtml(d.id)}">
@@ -147,6 +149,14 @@
                   ? `<ul class="nominator-list">${sentNames.map((n) => `<li>${escapeHtml(n)}</li>`).join("")}</ul>`
                   : `<p class="muted">Hasn't nominated anyone yet.</p>`
               }
+
+              ${
+                approved
+                  ? `<div class="actions">
+                      <button class="team-toggle${inTeam ? " in-team" : ""}" data-toggle-team="${escapeHtml(d.id)}">${inTeam ? "&#10003; Team" : "Team"}</button>
+                    </div>`
+                  : ""
+              }
             </div>
           </details>
         </div>
@@ -172,6 +182,9 @@
       const totalCount = dancers.length;
       const waitingApprovalCount = dancers.filter((d) => d.status !== "approved" && !d.flaggedRed).length;
       const waitingConnectionCount = dancers.filter((d) => !d.contacted && !d.flaggedRed).length;
+      const teamDancers = dancers.filter((d) => d.inTeam);
+      const pendingDancers = dancers.filter((d) => !d.inTeam && d.status !== "approved");
+      const approvedDancers = dancers.filter((d) => !d.inTeam && d.status === "approved");
 
       content.innerHTML = `
         ${MOCK_MODE ? `<div class="notice info">Local preview mode: showing mock data, nothing is saved.</div>` : ""}
@@ -192,8 +205,16 @@
           </div>
         </div>
         <div class="card">
+          <h2 style="font-size:1.2rem">Dancers in the team</h2>
+          ${teamDancers.length ? teamDancers.map(dancerRow).join("") : `<p class="muted">No dancers in the team yet.</p>`}
+        </div>
+        <div class="card">
+          <h2 style="font-size:1.2rem">Nomination waiting for approval</h2>
+          ${pendingDancers.length ? pendingDancers.map(dancerRow).join("") : `<p class="muted">No nominations waiting for approval.</p>`}
+        </div>
+        <div class="card">
           <h2 style="font-size:1.2rem">Nominated dancers</h2>
-          ${dancers.length ? dancers.map(dancerRow).join("") : `<p class="muted">No one has been nominated yet.</p>`}
+          ${approvedDancers.length ? approvedDancers.map(dancerRow).join("") : `<p class="muted">No approved dancers yet.</p>`}
         </div>
         <div class="card">
           <details>
@@ -228,6 +249,14 @@
         btn.addEventListener("click", async () => {
           btn.disabled = true;
           await approveDancer(btn.dataset.approve);
+          renderDashboard({ showLoading: false });
+        });
+      });
+      content.querySelectorAll("[data-toggle-team]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const nowInTeam = !btn.classList.contains("in-team");
+          btn.disabled = true;
+          await setInTeam(btn.dataset.toggleTeam, nowInTeam);
           renderDashboard({ showLoading: false });
         });
       });
