@@ -181,6 +181,16 @@ h1 {
   text-align: center;
 }
 
+.stats-row--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 640px) {
+  .stats-row--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .stat-number {
   display: block;
   font-family: "Playfair Display", serif;

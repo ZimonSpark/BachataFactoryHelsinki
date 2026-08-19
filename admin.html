@@ -188,6 +188,7 @@
       refreshPublicStats(dancers).catch((err) => console.error("Failed to refresh public stats", err));
 
       const totalCount = dancers.length;
+      const totalNominations = dancers.reduce((sum, d) => sum + (d.receivedNominationCount || 0), 0);
       const waitingApprovalCount = dancers.filter((d) => d.status !== "approved" && !d.flaggedRed).length;
       const waitingConnectionCount = dancers.filter((d) => !d.contacted && !d.flaggedRed).length;
       const teamDancers = dancers.filter((d) => d.inTeam);
@@ -197,9 +198,13 @@
       content.innerHTML = `
         ${MOCK_MODE ? `<div class="notice info">Local preview mode: showing mock data, nothing is saved.</div>` : ""}
         <div class="card">
-          <div class="stats-row">
+          <div class="stats-row stats-row--4">
             <div class="stat">
               <span class="stat-number">${totalCount}</span>
+              <span class="stat-label">Total nominees</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${totalNominations}</span>
               <span class="stat-label">Total nominations</span>
             </div>
             <div class="stat">
