@@ -331,6 +331,17 @@ export async function setContacted(token, contacted) {
   await firestore.updateDoc(firestore.doc(db, "dancers", token), { contacted });
 }
 
+export async function setContact(token, contact) {
+  const value = contact.trim();
+  if (!value) return;
+  if (MOCK_MODE) {
+    mockDancers.get(token).contact = value;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.updateDoc(firestore.doc(db, "dancers", token), { contact: value });
+}
+
 // Manual override for the "sent nominations" indicator color, so the admin can flag a
 // dancer green/red by hand regardless of their actual sentNominationCount.
 export async function setQualifiedOverride(token, qualified) {

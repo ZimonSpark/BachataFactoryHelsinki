@@ -33,6 +33,7 @@
       addDancerManually,
       deleteDancer,
       setContacted,
+      setContact,
       setQualifiedOverride,
       setFlaggedRed,
       setInTeam,
@@ -119,7 +120,11 @@
                     </div>`
                   : `<p class="muted">Countdown starts once approved.</p>`
               }
-              <p class="muted">Contact: ${escapeHtml(d.contact)}</p>
+              <label for="contactInput-${escapeHtml(d.id)}">Contact</label>
+              <div class="nominator-add-row">
+                <input type="text" id="contactInput-${escapeHtml(d.id)}" value="${escapeHtml(d.contact)}" />
+                <button class="secondary" data-save-contact="${escapeHtml(d.id)}" aria-label="Save contact">Save</button>
+              </div>
               <p class="invite-link">${inviteUrl(d.id)}</p>
 
               <label for="nomInput-${escapeHtml(d.id)}">Nominator name</label>
@@ -257,6 +262,16 @@
           const nowInTeam = !btn.classList.contains("in-team");
           btn.disabled = true;
           await setInTeam(btn.dataset.toggleTeam, nowInTeam);
+          renderDashboard({ showLoading: false });
+        });
+      });
+      content.querySelectorAll("[data-save-contact]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const token = btn.dataset.saveContact;
+          const input = document.getElementById(`contactInput-${token}`);
+          if (!input.value.trim()) return;
+          btn.disabled = true;
+          await setContact(token, input.value);
           renderDashboard({ showLoading: false });
         });
       });
