@@ -371,6 +371,18 @@ export async function setContact(token, contact) {
   await firestore.updateDoc(firestore.doc(db, "dancers", token), { contact: value });
 }
 
+// Free-text admin notes, private to the dashboard (never shown to the dancer). Unlike
+// contact, an empty value is valid — it's how the admin clears a note.
+export async function setNotes(token, notes) {
+  const value = notes.trim();
+  if (MOCK_MODE) {
+    mockDancers.get(token).notes = value;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.updateDoc(firestore.doc(db, "dancers", token), { notes: value });
+}
+
 // Manual override for the "sent nominations" indicator color, so the admin can flag a
 // dancer green/red by hand regardless of their actual sentNominationCount.
 export async function setQualifiedOverride(token, qualified) {

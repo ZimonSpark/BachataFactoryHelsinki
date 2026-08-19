@@ -265,7 +265,8 @@ label {
 }
 
 input[type="text"],
-input[type="email"] {
+input[type="email"],
+textarea {
   width: 100%;
   padding: 0.65rem 0.8rem;
   border-radius: 8px;
@@ -273,9 +274,15 @@ input[type="email"] {
   background: #0b0b0c;
   color: var(--text);
   font-size: 1rem;
+  font-family: inherit;
 }
 
-input:focus {
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
   outline: 2px solid var(--red);
 }
 

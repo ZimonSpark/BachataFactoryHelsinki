@@ -35,6 +35,7 @@
       deleteDancer,
       setContacted,
       setContact,
+      setNotes,
       setQualifiedOverride,
       setFlaggedRed,
       setInTeam,
@@ -155,6 +156,12 @@
                   ? `<ul class="nominator-list">${sentNames.map((n) => `<li>${escapeHtml(n)}</li>`).join("")}</ul>`
                   : `<p class="muted">Hasn't nominated anyone yet.</p>`
               }
+
+              <label for="notesInput-${escapeHtml(d.id)}">Notes</label>
+              <textarea id="notesInput-${escapeHtml(d.id)}" rows="3">${escapeHtml(d.notes || "")}</textarea>
+              <div class="actions">
+                <button class="secondary" data-save-notes="${escapeHtml(d.id)}">Save notes</button>
+              </div>
 
               ${
                 approved
@@ -280,6 +287,15 @@
           if (!input.value.trim()) return;
           btn.disabled = true;
           await setContact(token, input.value);
+          renderDashboard({ showLoading: false });
+        });
+      });
+      content.querySelectorAll("[data-save-notes]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const token = btn.dataset.saveNotes;
+          const textarea = document.getElementById(`notesInput-${token}`);
+          btn.disabled = true;
+          await setNotes(token, textarea.value);
           renderDashboard({ showLoading: false });
         });
       });
