@@ -14,8 +14,8 @@
   </main>
 
   <script type="module">
-    import { getDancerByToken, updateOwnName } from "./js/data.js";
-    import { escapeHtml, getQueryParam, nominationDeadlineMs, formatCountdown } from "./js/util.js";
+    import { getDancerByToken, updateOwnName, getPublicStats } from "./js/data.js";
+    import { escapeHtml, getQueryParam, nominationDeadlineMs, formatCountdown, NOMINATION_PERIOD_DEADLINE_MS } from "./js/util.js";
 
     const content = document.getElementById("content");
     const token = getQueryParam("t");
@@ -33,7 +33,7 @@
           This invite link isn't valid, or it may have expired. If you think this is a mistake,
           get in touch with the Administrator directly.
         </div>
-        <p><a class="button secondary" href="index.html">Discover more</a></p>
+        <p><a class="button secondary" href="index.html">All info here</a></p>
       `;
     }
 
@@ -43,7 +43,7 @@
       return "counter--low";
     }
 
-    function renderInvite(dancer, token) {
+    function renderInvite(dancer, stats, token) {
       const sentCount = dancer.sentNominationCount || 0;
       const sentNames = dancer.sentNominatedNames || [];
       const nameParts = (dancer.name || "").trim().split(/\s+/);
@@ -54,12 +54,28 @@
         <p class="tagline tagline--tight">You're invited to Bachata Factory Helsinki, a peer-driven project for bachata dancers.</p>
         <p class="countdown-box" id="countdown-box"></p>
         <div class="card">
+          <div class="stats-row">
+            <div class="stat">
+              <span class="stat-number">${stats.nomineeCount}</span>
+              <span class="stat-label">Nominees</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${stats.totalNominations}</span>
+              <span class="stat-label">Total nominations</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number stat-number--countdown" id="period-countdown"></span>
+              <span class="stat-label">The nomination period ends in:</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
           <p>
             Someone who's already part of this circle nominated you personally. This isn't a
             public event; your spot is reserved because they wanted you there.
           </p>
           <p class="muted">BFH runs weekly in Vallila starting mid-September.</p>
-          <a class="button secondary" href="index.html">Discover more</a>
+          <a class="button secondary" href="index.html">All info here</a>
         </div>
         <div class="steps">
           <div class="step">
@@ -139,7 +155,7 @@
         </div>
         <div class="card">
           <h2 style="font-size: 1.2rem">From whom would you gladly take feedback?</h2>
-          <p class="muted">Nominate minimum 5 max 10 dancers to be automatically registered in the Interested people list and receive updates</p>
+          <p class="muted">Nominate minimum 5 (max 10) dancers to automatically receive updates and express your desire in participating in the group. Multiple nomination of the same person are part of the game, don't worry about it.</p>
           <p>
             <span class="counter ${counterClass(sentCount)}">${sentCount}</span>
             <span class="muted">/ 10 nominated</span>
@@ -183,6 +199,16 @@
       renderCountdown();
       countdownTimer = setInterval(renderCountdown, 1000);
 
+      const periodEl = document.getElementById("period-countdown");
+      let periodTimer;
+      function renderPeriodCountdown() {
+        const remaining = formatCountdown(NOMINATION_PERIOD_DEADLINE_MS);
+        periodEl.textContent = remaining || "Closed";
+        if (!remaining) clearInterval(periodTimer);
+      }
+      renderPeriodCountdown();
+      periodTimer = setInterval(renderPeriodCountdown, 1000);
+
       document.getElementById("name-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const firstName = document.getElementById("firstName").value;
@@ -204,12 +230,15 @@
     if (!token) {
       renderNotFound();
     } else {
-      getDancerByToken(token)
-        .then((dancer) => {
+      Promise.all([
+        getDancerByToken(token),
+        getPublicStats().catch(() => ({ nomineeCount: 0, totalNominations: 0 })),
+      ])
+        .then(([dancer, stats]) => {
           if (!dancer || dancer.status !== "approved") {
             renderNotFound();
           } else {
-            renderInvite(dancer, token);
+            renderInvite(dancer, stats, token);
           }
         })
         .catch(() => renderNotFound());

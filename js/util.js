@@ -42,14 +42,23 @@ export function nominationDeadlineMs(approvedAt) {
   return start === null ? null : start + NOMINATION_WINDOW_HOURS * 3600 * 1000;
 }
 
-// Returns a compact "Xh XXm XXs" string, or null once the deadline has passed.
+// Returns a compact "Xh XXm XXs" string (or "Xd XXh XXm XXs" past 24h), or null once
+// the deadline has passed.
 export function formatCountdown(deadlineMs) {
   if (deadlineMs === null) return null;
   const remainingMs = deadlineMs - Date.now();
   if (remainingMs <= 0) return null;
   const totalSec = Math.floor(remainingMs / 1000);
-  const h = Math.floor(totalSec / 3600);
+  const d = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
-  return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+  const hStr = String(h).padStart(2, "0");
+  const mStr = String(m).padStart(2, "0");
+  const sStr = String(s).padStart(2, "0");
+  return d > 0 ? `${d}d ${hStr}h ${mStr}m ${sStr}s` : `${h}h ${mStr}m ${sStr}s`;
 }
+
+// Fixed final deadline for the whole nomination period (not per-dancer), pinned to
+// Helsinki time (+03:00, EEST) regardless of the viewer's own timezone.
+export const NOMINATION_PERIOD_DEADLINE_MS = new Date("2026-08-23T00:00:00+03:00").getTime();

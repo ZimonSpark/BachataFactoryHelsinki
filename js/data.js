@@ -220,6 +220,35 @@ export async function listAllDancers() {
   });
 }
 
+// Public-facing counts for invite.html. Firestore blocks non-admin "list" queries on the
+// dancers collection (that's what keeps invite tokens unguessable), so these two numbers
+// live in their own doc that only the admin dashboard is allowed to write — see
+// refreshPublicStats, called from admin.html on every dashboard load.
+export async function getPublicStats() {
+  if (MOCK_MODE) {
+    const list = [...mockDancers.values()];
+    return {
+      nomineeCount: list.length,
+      totalNominations: list.reduce((sum, d) => sum + (d.receivedNominationCount || 0), 0),
+    };
+  }
+  const { db, firestore } = await getFirebase();
+  const snap = await firestore.getDoc(firestore.doc(db, "stats", "global"));
+  if (!snap.exists()) return { nomineeCount: 0, totalNominations: 0 };
+  const data = snap.data();
+  return { nomineeCount: data.nomineeCount || 0, totalNominations: data.totalNominations || 0 };
+}
+
+// Recomputes and republishes the public stats doc from an already-fetched dancers list
+// (the admin dashboard's own listAllDancers() result), so it doesn't need a second query.
+export async function refreshPublicStats(dancers) {
+  if (MOCK_MODE) return;
+  const nomineeCount = dancers.length;
+  const totalNominations = dancers.reduce((sum, d) => sum + (d.receivedNominationCount || 0), 0);
+  const { db, firestore } = await getFirebase();
+  await firestore.setDoc(firestore.doc(db, "stats", "global"), { nomineeCount, totalNominations });
+}
+
 export async function approveDancer(token) {
   if (MOCK_MODE) {
     const d = mockDancers.get(token);

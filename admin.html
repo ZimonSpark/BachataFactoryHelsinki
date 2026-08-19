@@ -25,6 +25,7 @@
       signInAdmin,
       signOutAdmin,
       listAllDancers,
+      refreshPublicStats,
       approveDancer,
       addNominator,
       removeLatestNominator,
@@ -183,6 +184,8 @@
       }
       const [dancers, nameLog] = await Promise.all([listAllDancers(), listNameChangeLog()]);
       const scrollY = window.scrollY;
+
+      refreshPublicStats(dancers).catch((err) => console.error("Failed to refresh public stats", err));
 
       const totalCount = dancers.length;
       const waitingApprovalCount = dancers.filter((d) => d.status !== "approved" && !d.flaggedRed).length;

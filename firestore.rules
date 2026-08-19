@@ -82,6 +82,15 @@ service cloud.firestore {
       }
     }
 
+    // Public aggregate counts shown on invite.html (nominee count, total nominations).
+    // Only the admin dashboard recomputes and writes this doc — public clients can't query
+    // the dancers collection directly (see the "list" rule above), so this is the only way
+    // to surface those numbers without breaking the unguessable-token privacy model.
+    match /stats/global {
+      allow get: if true;
+      allow write: if isAdmin();
+    }
+
     // Maps a normalized name to the dancer token for that person, so a nominator can check
     // "has this person already been nominated?" with a plain get() — without needing
     // list/query access to the dancers collection (which would let anyone enumerate every
