@@ -28,6 +28,7 @@
       listAllDancers,
       listCalendarAttendance,
       setFridayAttendance,
+      setFridayNotes,
     } from "./js/data.js";
     import { escapeHtml, listFridays, formatFridayLabel, formatMonthLabel } from "./js/util.js";
 
@@ -45,8 +46,22 @@
       return { leaders, followers, both };
     }
 
-    function fridayCard(date, participantTokens, dancerByToken, allDancers) {
+    function participantListHtml(date, list) {
+      if (!list.length) return `<p class="muted">None scheduled.</p>`;
+      return `<ul class="nominator-list">${list
+        .map(
+          (d) => `<li>
+            <span>${escapeHtml(d.name)}${d.role ? ` (${escapeHtml(d.role)})` : ""}</span>
+            <button class="secondary icon-button" data-remove-participant="${date}" data-token="${escapeHtml(d.id)}" aria-label="Remove ${escapeHtml(d.name)}">&times;</button>
+          </li>`
+        )
+        .join("")}</ul>`;
+    }
+
+    function fridayCard(date, participantTokens, notes, dancerByToken, allDancers) {
       const participants = participantTokens.map((t) => dancerByToken.get(t)).filter(Boolean);
+      const teamParticipants = participants.filter((d) => d.inTeam);
+      const guestParticipants = participants.filter((d) => !d.inTeam);
       const { leaders, followers, both } = roleCounts(participants);
       const availableToAdd = allDancers
         .filter((d) => !participantTokens.includes(d.id))
@@ -57,33 +72,33 @@
           <details>
             <summary>
               <span class="friday-date">${formatFridayLabel(date)}</span>
-              <span class="friday-count">${participants.length} present</span>
+              <span class="friday-count">Team members: ${teamParticipants.length} &middot; Guests: ${guestParticipants.length}</span>
               <span class="role-counts">L ${leaders} &middot; F ${followers} &middot; LF ${both}</span>
             </summary>
             <div class="details-body">
-              ${
-                participants.length
-                  ? `<ul class="nominator-list">${participants
-                      .map(
-                        (d) => `<li>
-                          <span>${escapeHtml(d.name)}${d.role ? ` (${escapeHtml(d.role)})` : ""}</span>
-                          <button class="secondary icon-button" data-remove-participant="${date}" data-token="${escapeHtml(d.id)}" aria-label="Remove ${escapeHtml(d.name)}">&times;</button>
-                        </li>`
-                      )
-                      .join("")}</ul>`
-                  : `<p class="muted">No one scheduled yet.</p>`
-              }
+              <p class="muted" style="margin-top: 0">Team members</p>
+              ${participantListHtml(date, teamParticipants)}
+
+              <p class="muted" style="margin-top: 1rem">Guests</p>
+              ${participantListHtml(date, guestParticipants)}
+
               <div class="nominator-add-row">
                 <select data-add-select="${date}">
                   <option value="">Add a dancer&hellip;</option>
                   ${availableToAdd
                     .map(
                       (d) =>
-                        `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}${d.role ? ` (${escapeHtml(d.role)})` : ""}</option>`
+                        `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}${d.role ? ` (${escapeHtml(d.role)})` : ""}${d.inTeam ? "" : " &mdash; guest"}</option>`
                     )
                     .join("")}
                 </select>
                 <button class="secondary" data-add-participant="${date}">Add</button>
+              </div>
+
+              <label for="fridayNotes-${date}">Notes</label>
+              <textarea id="fridayNotes-${date}" rows="3">${escapeHtml(notes)}</textarea>
+              <div class="actions">
+                <button class="secondary" data-save-friday-notes="${date}">Save notes</button>
               </div>
             </div>
           </details>
@@ -110,8 +125,10 @@
       });
 
       const effective = {};
+      const effectiveNotes = {};
       fridays.forEach((date) => {
-        effective[date] = attendanceMap[date] ?? teamTokens;
+        effective[date] = attendanceMap[date]?.participants ?? teamTokens;
+        effectiveNotes[date] = attendanceMap[date]?.notes ?? "";
       });
 
       content.innerHTML = `
@@ -121,7 +138,7 @@
             (month) => `
               <div class="card">
                 <h2 style="font-size:1.2rem">${month.label}</h2>
-                ${month.dates.map((date) => fridayCard(date, effective[date], dancerByToken, dancers)).join("")}
+                ${month.dates.map((date) => fridayCard(date, effective[date], effectiveNotes[date], dancerByToken, dancers)).join("")}
               </div>
             `
           )
@@ -147,6 +164,15 @@
           const updated = [...effective[date], token];
           btn.disabled = true;
           await setFridayAttendance(date, updated);
+          renderCalendar();
+        });
+      });
+      content.querySelectorAll("[data-save-friday-notes]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const date = btn.dataset.saveFridayNotes;
+          const textarea = document.getElementById(`fridayNotes-${date}`);
+          btn.disabled = true;
+          await setFridayNotes(date, textarea.value);
           renderCalendar();
         });
       });

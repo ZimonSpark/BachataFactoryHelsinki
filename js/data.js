@@ -431,8 +431,9 @@ export async function setRole(token, role) {
 }
 
 // One doc per Friday in the calendarAttendance collection, { participants: string[] of
-// dancer tokens }. A date with no doc has no explicit record yet — calendar.html treats
-// that as "defaults to the current team roster" rather than writing a doc up front.
+// dancer tokens, notes: string }. A date with no doc has no explicit record yet —
+// calendar.html treats that as "defaults to the current team roster, no notes" rather
+// than writing a doc up front.
 export async function listCalendarAttendance() {
   if (MOCK_MODE) {
     return { ...mockCalendarAttendance };
@@ -441,18 +442,30 @@ export async function listCalendarAttendance() {
   const snap = await firestore.getDocs(firestore.collection(db, "calendarAttendance"));
   const result = {};
   snap.docs.forEach((d) => {
-    result[d.id] = d.data().participants || [];
+    result[d.id] = d.data();
   });
   return result;
 }
 
+// merge: true because participants and notes are saved independently (different buttons)
+// and neither write should clobber the other field.
 export async function setFridayAttendance(date, participantTokens) {
   if (MOCK_MODE) {
-    mockCalendarAttendance[date] = participantTokens;
+    mockCalendarAttendance[date] = { ...(mockCalendarAttendance[date] || {}), participants: participantTokens };
     return;
   }
   const { db, firestore } = await getFirebase();
-  await firestore.setDoc(firestore.doc(db, "calendarAttendance", date), { participants: participantTokens });
+  await firestore.setDoc(firestore.doc(db, "calendarAttendance", date), { participants: participantTokens }, { merge: true });
+}
+
+export async function setFridayNotes(date, notes) {
+  const value = notes.trim();
+  if (MOCK_MODE) {
+    mockCalendarAttendance[date] = { ...(mockCalendarAttendance[date] || {}), notes: value };
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.setDoc(firestore.doc(db, "calendarAttendance", date), { notes: value }, { merge: true });
 }
 
 export async function deleteDancer(token, nameKey) {
