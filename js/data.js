@@ -416,6 +416,17 @@ export async function setInTeam(token, inTeam) {
   await firestore.updateDoc(firestore.doc(db, "dancers", token), { inTeam });
 }
 
+// Dance role, cycled ? -> L (leader) -> F (follower) -> LF (both) -> ? by the admin.
+// null means unset (shown as "?"); Firestore can't store undefined, so null it is.
+export async function setRole(token, role) {
+  if (MOCK_MODE) {
+    mockDancers.get(token).role = role;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.updateDoc(firestore.doc(db, "dancers", token), { role: role ?? null });
+}
+
 export async function deleteDancer(token, nameKey) {
   if (MOCK_MODE) {
     mockDancers.delete(token);

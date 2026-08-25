@@ -39,6 +39,7 @@
       setQualifiedOverride,
       setFlaggedRed,
       setInTeam,
+      setRole,
       listNameChangeLog,
     } from "./js/data.js";
     import { escapeHtml, formatDate, nominationDeadlineMs, formatCountdown } from "./js/util.js";
@@ -75,6 +76,7 @@
       const qualifiedGreen = typeof d.qualifiedOverride === "boolean" ? d.qualifiedOverride : sentCount >= 5;
       const flaggedRed = !!d.flaggedRed;
       const inTeam = !!d.inTeam;
+      const role = d.role || null;
       const deadlineMs = approved ? nominationDeadlineMs(d.approvedAt) : null;
       return `
         <div class="dancer-row" data-token="${escapeHtml(d.id)}">
@@ -90,6 +92,13 @@
                     title="${flaggedRed ? "Flagged" : "Pending"} &middot; click to toggle"
                   >${flaggedRed ? "&#10060;" : "&#9203;"}</button>`
             }
+            <button
+              class="role-toggle"
+              data-toggle-role="${escapeHtml(d.id)}"
+              data-role="${role || ""}"
+              aria-label="Dance role: ${role || "unset"}"
+              title="Dance role &middot; click to cycle (? / L / F / LF)"
+            >${role || "?"}</button>
             <strong class="dancer-name">${escapeHtml(d.name)}</strong>
             <button
               class="badge qualified-badge ${qualifiedGreen ? "qualified-green" : "qualified-red"}"
@@ -198,7 +207,13 @@
       const totalNominations = dancers.reduce((sum, d) => sum + (d.receivedNominationCount || 0), 0);
       const waitingApprovalCount = dancers.filter((d) => d.status !== "approved" && !d.flaggedRed).length;
       const waitingConnectionCount = dancers.filter((d) => !d.contacted && !d.flaggedRed).length;
+      const leaderCount = dancers.filter((d) => d.role === "L").length;
+      const followerCount = dancers.filter((d) => d.role === "F").length;
+      const bothCount = dancers.filter((d) => d.role === "LF").length;
       const teamDancers = dancers.filter((d) => d.inTeam);
+      const teamLeaderCount = teamDancers.filter((d) => d.role === "L").length;
+      const teamFollowerCount = teamDancers.filter((d) => d.role === "F").length;
+      const teamBothCount = teamDancers.filter((d) => d.role === "LF").length;
       const pendingDancers = dancers.filter((d) => !d.inTeam && d.status !== "approved");
       const approvedDancers = dancers.filter((d) => !d.inTeam && d.status === "approved");
 
@@ -222,10 +237,40 @@
               <span class="stat-number">${waitingConnectionCount}</span>
               <span class="stat-label">Waiting for connection</span>
             </div>
+            <div class="stat">
+              <span class="stat-number">${leaderCount}</span>
+              <span class="stat-label">Leaders</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${followerCount}</span>
+              <span class="stat-label">Followers</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${bothCount}</span>
+              <span class="stat-label">Both</span>
+            </div>
           </div>
         </div>
         <div class="card">
           <h2 style="font-size:1.2rem">Dancers in the team</h2>
+          <div class="stats-row stats-row--4">
+            <div class="stat">
+              <span class="stat-number">${teamDancers.length}</span>
+              <span class="stat-label">Total in team</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${teamLeaderCount}</span>
+              <span class="stat-label">Leaders</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${teamFollowerCount}</span>
+              <span class="stat-label">Followers</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${teamBothCount}</span>
+              <span class="stat-label">Both</span>
+            </div>
+          </div>
           ${teamDancers.length ? teamDancers.map(dancerRow).join("") : `<p class="muted">No dancers in the team yet.</p>`}
         </div>
         <div class="card">
@@ -277,6 +322,15 @@
           const nowInTeam = !btn.classList.contains("in-team");
           btn.disabled = true;
           await setInTeam(btn.dataset.toggleTeam, nowInTeam);
+          renderDashboard({ showLoading: false });
+        });
+      });
+      content.querySelectorAll("[data-toggle-role]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const current = btn.dataset.role || null;
+          const next = current === "L" ? "F" : current === "F" ? "LF" : current === "LF" ? null : "L";
+          btn.disabled = true;
+          await setRole(btn.dataset.toggleRole, next);
           renderDashboard({ showLoading: false });
         });
       });
