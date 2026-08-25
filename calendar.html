@@ -58,7 +58,7 @@
         .join("")}</ul>`;
     }
 
-    function fridayCard(date, participantTokens, notes, dancerByToken, allDancers) {
+    function fridayCard(date, participantTokens, notes, dancerByToken, allDancers, isOpen) {
       const participants = participantTokens.map((t) => dancerByToken.get(t)).filter(Boolean);
       const teamParticipants = participants.filter((d) => d.inTeam);
       const guestParticipants = participants.filter((d) => !d.inTeam);
@@ -69,7 +69,7 @@
 
       return `
         <div class="friday-row" data-date="${date}">
-          <details>
+          <details${isOpen ? " open" : ""}>
             <summary>
               <span class="friday-date">${formatFridayLabel(date)}</span>
               <span class="friday-count">Team members: ${teamParticipants.length} &middot; Guests: ${guestParticipants.length}</span>
@@ -83,15 +83,21 @@
               ${participantListHtml(date, guestParticipants)}
 
               <div class="nominator-add-row">
-                <select data-add-select="${date}">
-                  <option value="">Add a dancer&hellip;</option>
+                <input
+                  type="text"
+                  list="dancerOptions-${date}"
+                  data-add-input="${date}"
+                  placeholder="Search a dancer&hellip;"
+                  autocomplete="off"
+                />
+                <datalist id="dancerOptions-${date}">
                   ${availableToAdd
                     .map(
                       (d) =>
-                        `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}${d.role ? ` (${escapeHtml(d.role)})` : ""}${d.inTeam ? "" : " &mdash; guest"}</option>`
+                        `<option value="${escapeHtml(d.name)}">${escapeHtml(d.name)}${d.role ? ` (${escapeHtml(d.role)})` : ""}${d.inTeam ? "" : " &mdash; guest"}</option>`
                     )
                     .join("")}
-                </select>
+                </datalist>
                 <button class="secondary" data-add-participant="${date}">Add</button>
               </div>
 
@@ -106,8 +112,17 @@
       `;
     }
 
-    async function renderCalendar() {
-      content.innerHTML = `<p class="muted">Loading&hellip;</p>`;
+    async function renderCalendar({ showLoading = true } = {}) {
+      const scrollY = window.scrollY;
+      const openDates = new Set(
+        [...content.querySelectorAll(".friday-row")]
+          .filter((row) => row.querySelector("details")?.open)
+          .map((row) => row.dataset.date)
+      );
+
+      if (showLoading) {
+        content.innerHTML = `<p class="muted">Loading&hellip;</p>`;
+      }
       const [dancers, attendanceMap] = await Promise.all([listAllDancers(), listCalendarAttendance()]);
       const dancerByToken = new Map(dancers.map((d) => [d.id, d]));
       const teamTokens = dancers.filter((d) => d.inTeam).map((d) => d.id);
@@ -138,12 +153,13 @@
             (month) => `
               <div class="card">
                 <h2 style="font-size:1.2rem">${month.label}</h2>
-                ${month.dates.map((date) => fridayCard(date, effective[date], effectiveNotes[date], dancerByToken, dancers)).join("")}
+                ${month.dates.map((date) => fridayCard(date, effective[date], effectiveNotes[date], dancerByToken, dancers, openDates.has(date))).join("")}
               </div>
             `
           )
           .join("")}
       `;
+      window.scrollTo(0, scrollY);
 
       content.querySelectorAll("[data-remove-participant]").forEach((btn) => {
         btn.addEventListener("click", async () => {
@@ -152,19 +168,21 @@
           const updated = effective[date].filter((t) => t !== token);
           btn.disabled = true;
           await setFridayAttendance(date, updated);
-          renderCalendar();
+          renderCalendar({ showLoading: false });
         });
       });
       content.querySelectorAll("[data-add-participant]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const date = btn.dataset.addParticipant;
-          const select = content.querySelector(`[data-add-select="${date}"]`);
-          const token = select.value;
-          if (!token) return;
-          const updated = [...effective[date], token];
+          const input = content.querySelector(`[data-add-input="${date}"]`);
+          const typedName = input.value.trim();
+          if (!typedName) return;
+          const match = dancers.find((d) => !effective[date].includes(d.id) && d.name === typedName);
+          if (!match) return;
+          const updated = [...effective[date], match.id];
           btn.disabled = true;
           await setFridayAttendance(date, updated);
-          renderCalendar();
+          renderCalendar({ showLoading: false });
         });
       });
       content.querySelectorAll("[data-save-friday-notes]").forEach((btn) => {
@@ -173,7 +191,7 @@
           const textarea = document.getElementById(`fridayNotes-${date}`);
           btn.disabled = true;
           await setFridayNotes(date, textarea.value);
-          renderCalendar();
+          renderCalendar({ showLoading: false });
         });
       });
     }
