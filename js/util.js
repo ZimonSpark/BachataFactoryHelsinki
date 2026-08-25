@@ -62,3 +62,35 @@ export function formatCountdown(deadlineMs) {
 // Fixed final deadline for the whole nomination period (not per-dancer), pinned to
 // Helsinki time (+03:00, EEST) regardless of the viewer's own timezone.
 export const NOMINATION_PERIOD_DEADLINE_MS = new Date("2026-08-23T00:00:00+03:00").getTime();
+
+// The team calendar only ever covers this fixed run of Fridays.
+export const CALENDAR_START = "2026-09-18";
+export const CALENDAR_END = "2026-11-27";
+
+// Every Friday from start to end (both inclusive, both must already be Fridays), as
+// "YYYY-MM-DD" strings. Noon UTC avoids DST-related date-shift edge cases.
+export function listFridays(startStr = CALENDAR_START, endStr = CALENDAR_END) {
+  const fridays = [];
+  const cur = new Date(`${startStr}T12:00:00Z`);
+  const end = new Date(`${endStr}T12:00:00Z`);
+  while (cur <= end) {
+    fridays.push(cur.toISOString().slice(0, 10));
+    cur.setUTCDate(cur.getUTCDate() + 7);
+  }
+  return fridays;
+}
+
+// "Friday, 18 September 2026"
+export function formatFridayLabel(dateStr) {
+  return new Date(`${dateStr}T12:00:00Z`).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+// "September 2026" — used to group Fridays into monthly sections.
+export function formatMonthLabel(dateStr) {
+  return new Date(`${dateStr}T12:00:00Z`).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+}

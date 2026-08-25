@@ -13,6 +13,7 @@
       <span id="who"></span>
     </nav>
     <h1>Admin</h1>
+    <p><a href="calendar.html" class="subnav-link">Team calendar &rarr;</a></p>
     <div id="content">
       <p class="muted">Loading&hellip;</p>
     </div>
@@ -81,17 +82,13 @@
       return `
         <div class="dancer-row" data-token="${escapeHtml(d.id)}">
           <div class="dancer-row-main">
-            ${
-              approved
-                ? `<span class="status-icon" title="Approved">&#9989;</span>`
-                : `<button
-                    class="status-toggle"
-                    data-toggle-pending="${escapeHtml(d.id)}"
-                    data-flagged="${flaggedRed ? "true" : "false"}"
-                    aria-label="${flaggedRed ? "Flagged — click to show hourglass" : "Pending — click to flag red"}"
-                    title="${flaggedRed ? "Flagged" : "Pending"} &middot; click to toggle"
-                  >${flaggedRed ? "&#10060;" : "&#9203;"}</button>`
-            }
+            <button
+              class="status-toggle"
+              data-toggle-flag="${escapeHtml(d.id)}"
+              data-flagged="${flaggedRed ? "true" : "false"}"
+              aria-label="${flaggedRed ? "Flagged — click to reset" : "Click to flag red"}"
+              title="${flaggedRed ? "Flagged" : approved ? "Approved" : "Pending"} &middot; click to toggle"
+            >${flaggedRed ? "&#10060;" : approved ? "&#9989;" : "&#9203;"}</button>
             <button
               class="role-toggle"
               data-toggle-role="${escapeHtml(d.id)}"
@@ -363,11 +360,11 @@
           renderDashboard({ showLoading: false });
         });
       });
-      content.querySelectorAll("[data-toggle-pending]").forEach((btn) => {
+      content.querySelectorAll("[data-toggle-flag]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const nowFlagged = btn.dataset.flagged !== "true";
           btn.disabled = true;
-          await setFlaggedRed(btn.dataset.togglePending, nowFlagged);
+          await setFlaggedRed(btn.dataset.toggleFlag, nowFlagged);
           renderDashboard({ showLoading: false });
         });
       });

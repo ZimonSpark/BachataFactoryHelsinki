@@ -614,3 +614,70 @@ nav.top a {
 nav.top a:hover {
   color: var(--red-hover);
 }
+
+.subnav-link {
+  color: var(--gold);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.subnav-link:hover {
+  color: var(--gold-soft);
+}
+
+select {
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0b0b0c;
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+select:focus {
+  outline: 2px solid var(--red);
+}
+
+.nominator-add-row select {
+  flex: 1;
+}
+
+.friday-row {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.friday-row:first-of-type {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.friday-row summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  padding-right: 1.75rem;
+}
+
+.friday-date {
+  font-family: "Playfair Display", serif;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.friday-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.role-counts {
+  font-size: 0.85rem;
+  color: var(--gold-soft);
+  margin-left: auto;
+  white-space: nowrap;
+}

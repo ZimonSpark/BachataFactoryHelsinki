@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team calendar · Bachata Factory Helsinki</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <nav class="top">
+      <a href="admin.html">&larr; Admin</a>
+      <span id="who"></span>
+    </nav>
+    <h1>Team calendar</h1>
+    <p class="muted">Friday sessions only, 18 Sep &ndash; 27 Nov 2026.</p>
+    <div id="content">
+      <p class="muted">Loading&hellip;</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import {
+      MOCK_MODE,
+      onAdminAuthChange,
+      signInAdmin,
+      signOutAdmin,
+      listAllDancers,
+      listCalendarAttendance,
+      setFridayAttendance,
+    } from "./js/data.js";
+    import { escapeHtml, listFridays, formatFridayLabel, formatMonthLabel } from "./js/util.js";
+
+    const content = document.getElementById("content");
+    const who = document.getElementById("who");
+
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted) location.reload();
+    });
+
+    function roleCounts(participants) {
+      const leaders = participants.filter((d) => d.role === "L").length;
+      const followers = participants.filter((d) => d.role === "F").length;
+      const both = participants.filter((d) => d.role === "LF").length;
+      return { leaders, followers, both };
+    }
+
+    function fridayCard(date, participantTokens, dancerByToken, allDancers) {
+      const participants = participantTokens.map((t) => dancerByToken.get(t)).filter(Boolean);
+      const { leaders, followers, both } = roleCounts(participants);
+      const availableToAdd = allDancers
+        .filter((d) => !participantTokens.includes(d.id))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      return `
+        <div class="friday-row" data-date="${date}">
+          <details>
+            <summary>
+              <span class="friday-date">${formatFridayLabel(date)}</span>
+              <span class="friday-count">${participants.length} present</span>
+              <span class="role-counts">L ${leaders} &middot; F ${followers} &middot; LF ${both}</span>
+            </summary>
+            <div class="details-body">
+              ${
+                participants.length
+                  ? `<ul class="nominator-list">${participants
+                      .map(
+                        (d) => `<li>
+                          <span>${escapeHtml(d.name)}${d.role ? ` (${escapeHtml(d.role)})` : ""}</span>
+                          <button class="secondary icon-button" data-remove-participant="${date}" data-token="${escapeHtml(d.id)}" aria-label="Remove ${escapeHtml(d.name)}">&times;</button>
+                        </li>`
+                      )
+                      .join("")}</ul>`
+                  : `<p class="muted">No one scheduled yet.</p>`
+              }
+              <div class="nominator-add-row">
+                <select data-add-select="${date}">
+                  <option value="">Add a dancer&hellip;</option>
+                  ${availableToAdd
+                    .map(
+                      (d) =>
+                        `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}${d.role ? ` (${escapeHtml(d.role)})` : ""}</option>`
+                    )
+                    .join("")}
+                </select>
+                <button class="secondary" data-add-participant="${date}">Add</button>
+              </div>
+            </div>
+          </details>
+        </div>
+      `;
+    }
+
+    async function renderCalendar() {
+      content.innerHTML = `<p class="muted">Loading&hellip;</p>`;
+      const [dancers, attendanceMap] = await Promise.all([listAllDancers(), listCalendarAttendance()]);
+      const dancerByToken = new Map(dancers.map((d) => [d.id, d]));
+      const teamTokens = dancers.filter((d) => d.inTeam).map((d) => d.id);
+
+      const fridays = listFridays();
+      const months = [];
+      fridays.forEach((date) => {
+        const label = formatMonthLabel(date);
+        let group = months.find((m) => m.label === label);
+        if (!group) {
+          group = { label, dates: [] };
+          months.push(group);
+        }
+        group.dates.push(date);
+      });
+
+      const effective = {};
+      fridays.forEach((date) => {
+        effective[date] = attendanceMap[date] ?? teamTokens;
+      });
+
+      content.innerHTML = `
+        ${MOCK_MODE ? `<div class="notice info">Local preview mode: showing mock data, nothing is saved.</div>` : ""}
+        ${months
+          .map(
+            (month) => `
+              <div class="card">
+                <h2 style="font-size:1.2rem">${month.label}</h2>
+                ${month.dates.map((date) => fridayCard(date, effective[date], dancerByToken, dancers)).join("")}
+              </div>
+            `
+          )
+          .join("")}
+      `;
+
+      content.querySelectorAll("[data-remove-participant]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const date = btn.dataset.removeParticipant;
+          const token = btn.dataset.token;
+          const updated = effective[date].filter((t) => t !== token);
+          btn.disabled = true;
+          await setFridayAttendance(date, updated);
+          renderCalendar();
+        });
+      });
+      content.querySelectorAll("[data-add-participant]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const date = btn.dataset.addParticipant;
+          const select = content.querySelector(`[data-add-select="${date}"]`);
+          const token = select.value;
+          if (!token) return;
+          const updated = [...effective[date], token];
+          btn.disabled = true;
+          await setFridayAttendance(date, updated);
+          renderCalendar();
+        });
+      });
+    }
+
+    function renderSignedOut() {
+      content.innerHTML = `
+        <div class="card">
+          <p>Sign in with the admin Google account to manage the team calendar.</p>
+          <button id="signin">Sign in with Google</button>
+        </div>
+      `;
+      document.getElementById("signin").addEventListener("click", () => signInAdmin().catch((err) => alert(err.message)));
+    }
+
+    function renderUnauthorized(email) {
+      content.innerHTML = `
+        <div class="notice error">Signed in as ${escapeHtml(email)}, which isn't the admin account.</div>
+        <button id="signout" class="secondary">Sign out</button>
+      `;
+      document.getElementById("signout").addEventListener("click", () => signOutAdmin());
+    }
+
+    if (MOCK_MODE) {
+      who.textContent = "local preview";
+      renderCalendar();
+    } else {
+      onAdminAuthChange(({ signedIn, isAdmin, email }) => {
+        if (!signedIn) {
+          who.textContent = "";
+          renderSignedOut();
+        } else if (!isAdmin) {
+          who.textContent = email;
+          renderUnauthorized(email);
+        } else {
+          who.innerHTML = `${escapeHtml(email)} &middot; <a href="#" id="signout-link">sign out</a>`;
+          document.getElementById("signout-link")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            signOutAdmin();
+          });
+          renderCalendar();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -9,6 +9,9 @@ import { mockDancers } from "./mock-data.js";
 // Ephemeral, mock-mode-only audit trail (resets on reload, same as the rest of mock state).
 const mockNameChangeLog = [];
 
+// Ephemeral, mock-mode-only calendar attendance store: { [date]: string[] of tokens }.
+const mockCalendarAttendance = {};
+
 const SDK = "https://www.gstatic.com/firebasejs/10.13.2";
 
 export const MOCK_MODE = !isConfigured;
@@ -425,6 +428,31 @@ export async function setRole(token, role) {
   }
   const { db, firestore } = await getFirebase();
   await firestore.updateDoc(firestore.doc(db, "dancers", token), { role: role ?? null });
+}
+
+// One doc per Friday in the calendarAttendance collection, { participants: string[] of
+// dancer tokens }. A date with no doc has no explicit record yet — calendar.html treats
+// that as "defaults to the current team roster" rather than writing a doc up front.
+export async function listCalendarAttendance() {
+  if (MOCK_MODE) {
+    return { ...mockCalendarAttendance };
+  }
+  const { db, firestore } = await getFirebase();
+  const snap = await firestore.getDocs(firestore.collection(db, "calendarAttendance"));
+  const result = {};
+  snap.docs.forEach((d) => {
+    result[d.id] = d.data().participants || [];
+  });
+  return result;
+}
+
+export async function setFridayAttendance(date, participantTokens) {
+  if (MOCK_MODE) {
+    mockCalendarAttendance[date] = participantTokens;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.setDoc(firestore.doc(db, "calendarAttendance", date), { participants: participantTokens });
 }
 
 export async function deleteDancer(token, nameKey) {

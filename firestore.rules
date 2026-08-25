@@ -91,6 +91,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Team calendar (per-Friday attendance for the team). Purely an internal admin
+    // planning tool — never exposed to dancers, so it's admin-only end to end.
+    match /calendarAttendance/{date} {
+      allow read, write: if isAdmin();
+    }
+
     // Maps a normalized name to the dancer token for that person, so a nominator can check
     // "has this person already been nominated?" with a plain get() — without needing
     // list/query access to the dancers collection (which would let anyone enumerate every
