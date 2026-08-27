@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interested people list · Bachata Factory Helsinki</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <nav class="top">
+      <a href="admin.html">&larr; Admin</a>
+      <span id="who"></span>
+    </nav>
+    <h1>Interested people list</h1>
+    <p class="muted">Nominees not on the team who nominated 5 or more dancers themselves.</p>
+    <div id="content">
+      <p class="muted">Loading&hellip;</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { MOCK_MODE, onAdminAuthChange, signInAdmin, signOutAdmin, listAllDancers } from "./js/data.js";
+    import { escapeHtml } from "./js/util.js";
+    import { dancerRow, wireDancerRowHandlers, startCountdownTicker } from "./js/dancer-row.js";
+
+    const content = document.getElementById("content");
+    const who = document.getElementById("who");
+
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted) location.reload();
+    });
+
+    // Same "qualified" signal as the green/red badge on the admin dashboard — respects
+    // the admin's manual override where set, falls back to the raw 5+ rule otherwise.
+    function isInterested(d) {
+      if (d.inTeam) return false;
+      const sentCount = d.sentNominationCount || 0;
+      const qualified = typeof d.qualifiedOverride === "boolean" ? d.qualifiedOverride : sentCount >= 5;
+      return qualified;
+    }
+
+    async function renderList({ showLoading = true } = {}) {
+      if (showLoading) {
+        content.innerHTML = `<p class="muted">Loading&hellip;</p>`;
+      }
+      const dancers = await listAllDancers();
+      const scrollY = window.scrollY;
+      const interested = dancers.filter(isInterested);
+
+      content.innerHTML = `
+        ${MOCK_MODE ? `<div class="notice info">Local preview mode: showing mock data, nothing is saved.</div>` : ""}
+        <div class="card">
+          <p class="muted" style="margin-top: 0">${interested.length} ${interested.length === 1 ? "person" : "people"}</p>
+          ${interested.length ? interested.map(dancerRow).join("") : `<p class="muted">No one qualifies yet.</p>`}
+        </div>
+      `;
+      window.scrollTo(0, scrollY);
+
+      wireDancerRowHandlers(content, () => renderList({ showLoading: false }));
+    }
+
+    function renderSignedOut() {
+      content.innerHTML = `
+        <div class="card">
+          <p>Sign in with the admin Google account to view the interested people list.</p>
+          <button id="signin">Sign in with Google</button>
+        </div>
+      `;
+      document.getElementById("signin").addEventListener("click", () => signInAdmin().catch((err) => alert(err.message)));
+    }
+
+    function renderUnauthorized(email) {
+      content.innerHTML = `
+        <div class="notice error">Signed in as ${escapeHtml(email)}, which isn't the admin account.</div>
+        <button id="signout" class="secondary">Sign out</button>
+      `;
+      document.getElementById("signout").addEventListener("click", () => signOutAdmin());
+    }
+
+    startCountdownTicker(content);
+
+    if (MOCK_MODE) {
+      who.textContent = "local preview";
+      renderList();
+    } else {
+      onAdminAuthChange(({ signedIn, isAdmin, email }) => {
+        if (!signedIn) {
+          who.textContent = "";
+          renderSignedOut();
+        } else if (!isAdmin) {
+          who.textContent = email;
+          renderUnauthorized(email);
+        } else {
+          who.innerHTML = `${escapeHtml(email)} &middot; <a href="#" id="signout-link">sign out</a>`;
+          document.getElementById("signout-link")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            signOutAdmin();
+          });
+          renderList();
+        }
+      });
+    }
+  </script>
+</body>
+</html>
