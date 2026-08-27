@@ -47,11 +47,33 @@
       const dancers = await listAllDancers();
       const scrollY = window.scrollY;
       const interested = dancers.filter(isInterested);
+      const leaderCount = interested.filter((d) => d.role === "L").length;
+      const followerCount = interested.filter((d) => d.role === "F").length;
+      const bothCount = interested.filter((d) => d.role === "LF").length;
 
       content.innerHTML = `
         ${MOCK_MODE ? `<div class="notice info">Local preview mode: showing mock data, nothing is saved.</div>` : ""}
         <div class="card">
-          <p class="muted" style="margin-top: 0">${interested.length} ${interested.length === 1 ? "person" : "people"}</p>
+          <div class="stats-row stats-row--4">
+            <div class="stat">
+              <span class="stat-number">${interested.length}</span>
+              <span class="stat-label">Nominees</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${leaderCount}</span>
+              <span class="stat-label">Leaders</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${followerCount}</span>
+              <span class="stat-label">Followers</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${bothCount}</span>
+              <span class="stat-label">Both</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
           ${interested.length ? interested.map(dancerRow).join("") : `<p class="muted">No one qualifies yet.</p>`}
         </div>
       `;
