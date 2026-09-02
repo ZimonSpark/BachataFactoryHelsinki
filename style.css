@@ -21,6 +21,7 @@
   --green-light: #a8dab5;
   --green-deep: #2f9e56;
   --bright-green: #00e676;
+  --blue: #3b82f6;
 }
 
 * {
@@ -523,6 +524,14 @@ details[open] summary::after {
 .role-toggle:hover {
   background: rgba(200, 169, 106, 0.12) !important;
   transform: none;
+}
+
+.interested-checkbox {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--blue);
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .dancer-row-main button {

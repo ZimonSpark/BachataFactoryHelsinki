@@ -17,6 +17,7 @@ import {
   setFlaggedRed,
   setInTeam,
   setRole,
+  setInterestedChecked,
 } from "./data.js";
 
 export function inviteUrl(token) {
@@ -36,7 +37,7 @@ export function adminCountdownText(deadlineMs, sentCount) {
     : `${remaining} left &middot; ${sentCount}/5 nominated`;
 }
 
-export function dancerRow(d) {
+export function dancerRow(d, { showInterestedCheckbox = false } = {}) {
   const approved = d.status === "approved";
   const nominators = d.receivedNominators || [];
   const sentNames = d.sentNominatedNames || [];
@@ -45,10 +46,22 @@ export function dancerRow(d) {
   const flaggedRed = !!d.flaggedRed;
   const inTeam = !!d.inTeam;
   const role = d.role || null;
+  const interestedChecked = !!d.interestedChecked;
   const deadlineMs = approved ? nominationDeadlineMs(d.approvedAt) : null;
   return `
     <div class="dancer-row" data-token="${escapeHtml(d.id)}">
       <div class="dancer-row-main">
+        ${
+          showInterestedCheckbox
+            ? `<input
+                type="checkbox"
+                class="interested-checkbox"
+                data-toggle-interested="${escapeHtml(d.id)}"
+                ${interestedChecked ? "checked" : ""}
+                aria-label="Mark ${escapeHtml(d.name)}"
+              />`
+            : ""
+        }
         <button
           class="status-toggle"
           data-toggle-flag="${escapeHtml(d.id)}"
@@ -204,6 +217,13 @@ export function wireDancerRowHandlers(container, refresh) {
       if (!input.value.trim()) return;
       btn.disabled = true;
       await addNominator(token, input.value);
+      refresh();
+    });
+  });
+  container.querySelectorAll("[data-toggle-interested]").forEach((checkbox) => {
+    checkbox.addEventListener("change", async () => {
+      checkbox.disabled = true;
+      await setInterestedChecked(checkbox.dataset.toggleInterested, checkbox.checked);
       refresh();
     });
   });

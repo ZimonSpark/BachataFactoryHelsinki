@@ -74,7 +74,11 @@
           </div>
         </div>
         <div class="card">
-          ${interested.length ? interested.map(dancerRow).join("") : `<p class="muted">No one qualifies yet.</p>`}
+          ${
+            interested.length
+              ? interested.map((d) => dancerRow(d, { showInterestedCheckbox: true })).join("")
+              : `<p class="muted">No one qualifies yet.</p>`
+          }
         </div>
       `;
       window.scrollTo(0, scrollY);

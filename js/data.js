@@ -386,6 +386,17 @@ export async function setNotes(token, notes) {
   await firestore.updateDoc(firestore.doc(db, "dancers", token), { notes: value });
 }
 
+// Blue checkbox on the interested-people list — a plain manual tick/untick with no
+// other logic attached, purely for the admin's own tracking.
+export async function setInterestedChecked(token, checked) {
+  if (MOCK_MODE) {
+    mockDancers.get(token).interestedChecked = checked;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.updateDoc(firestore.doc(db, "dancers", token), { interestedChecked: checked });
+}
+
 // Manual override for the "sent nominations" indicator color, so the admin can flag a
 // dancer green/red by hand regardless of their actual sentNominationCount.
 export async function setQualifiedOverride(token, qualified) {
