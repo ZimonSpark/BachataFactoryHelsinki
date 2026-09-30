@@ -777,16 +777,24 @@ select:focus {
   position: absolute;
   left: 0;
   top: 0;
-  width: 46px;
-  height: 46px;
-  margin: -23px 0 0 -23px;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--gold);
   border-radius: 50%;
   background: rgba(11, 11, 12, 0.55);
   color: var(--gold);
-  font-family: "Playfair Display", serif;
-  font-size: 1.1rem;
-  font-weight: 600;
+  /* Inter with lining figures sits on the optical centre (Playfair's old-style
+     figures rise and drop, which made the numbers look off-centre) */
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
@@ -828,11 +836,40 @@ select:focus {
   transition-delay: 0s;
 }
 
+/* first wrong press is forgiven: a short red flash instead of the exit */
+.hero-num.is-miss {
+  animation: hero-num-miss 0.7s ease;
+}
+
+@keyframes hero-num-miss {
+  0%, 100% { border-color: var(--gold); color: var(--gold); box-shadow: none; }
+  25%, 60% { border-color: var(--red-hover); color: var(--red-hover); box-shadow: 0 0 14px rgba(240, 42, 58, 0.55); }
+}
+
+.hero-prompt {
+  margin: auto 0 0;
+  font-family: "Playfair Display", serif;
+  font-style: italic;
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+  color: var(--gold-soft);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.hero-prompt.is-shown {
+  opacity: 0.9;
+}
+
+.hero-prompt.is-gone {
+  opacity: 0;
+  transition-duration: 1.4s;
+}
+
 @media (max-width: 480px) {
   .hero-num {
-    width: 40px;
-    height: 40px;
-    margin: -20px 0 0 -20px;
-    font-size: 1rem;
+    width: 48px;
+    height: 48px;
+    margin: -24px 0 0 -24px;
+    font-size: 1.15rem;
   }
 }

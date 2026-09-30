@@ -1,7 +1,8 @@
 // Homepage "password" dial: the numbers 1-10 sit evenly on a circle around
-// the Medusa. Pressing them in the right order opens the info page; one wrong
-// press sends the Medusa away (its entrance played in reverse) and the numbers
-// with it. Reload the page to try again.
+// the Medusa. Pressing them in the right order opens the info page. A wrong
+// first press only flashes red; any wrong press after that sends the Medusa
+// away (its entrance played in reverse) and the numbers with it. Reload the
+// page to try again.
 (function () {
   "use strict";
 
@@ -13,7 +14,9 @@
   var NUMBERS = 10;
   var APPEAR_DELAY_MS = 1800; // numbers fade in as the bust finishes assembling
 
+  var prompt = document.getElementById("hero-prompt");
   var step = 0;
+  var presses = 0;
   var locked = false;
 
   for (var n = 1; n <= NUMBERS; n++) {
@@ -29,10 +32,14 @@
     dial.appendChild(btn);
   }
 
-  setTimeout(function () { dial.classList.add("is-shown"); }, APPEAR_DELAY_MS);
+  setTimeout(function () {
+    dial.classList.add("is-shown");
+    if (prompt) prompt.classList.add("is-shown");
+  }, APPEAR_DELAY_MS);
 
   function onPress(n, btn) {
     if (locked) return;
+    presses++;
     if (n === SEQUENCE[step]) {
       btn.classList.add("is-hit");
       step++;
@@ -43,8 +50,16 @@
       }
       return;
     }
+    // the very first press is forgiven: flash it red and keep waiting for 1
+    if (presses === 1) {
+      btn.classList.remove("is-miss");
+      void btn.offsetWidth; // restart the flash animation
+      btn.classList.add("is-miss");
+      return;
+    }
     locked = true;
     dial.classList.add("is-gone");
+    if (prompt) prompt.classList.add("is-gone");
     if (window.medusaHero) window.medusaHero.disappear();
   }
 })();
