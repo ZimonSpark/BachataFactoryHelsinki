@@ -878,3 +878,15 @@ select:focus {
     font-size: 1.15rem;
   }
 }
+
+/* about page: brand logo in place of a text heading */
+.logo-heading {
+  margin: 0.5rem 0 2rem;
+  text-align: center;
+}
+
+.logo {
+  display: inline-block;
+  width: min(100%, 420px);
+  height: auto;
+}
