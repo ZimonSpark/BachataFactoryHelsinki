@@ -7,7 +7,26 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="page">
+  <section class="hero" id="hero">
+    <canvas id="hero-canvas" class="hero-canvas" aria-hidden="true"></canvas>
+    <div class="hero-vignette"></div>
+    <div class="hero-loading">Loading&hellip;</div>
+
+    <div class="hero-overlay">
+      <div class="hero-brand">Bachata Factory Helsinki</div>
+
+      <div class="hero-bottom">
+        <div class="hero-copy">
+          <h2 class="hero-title">We learn from each other,<br>one week at a time.</h2>
+          <p class="hero-tagline">A peer-driven bachata community, meeting weekly to grow together on the floor.</p>
+          <a class="hero-cta" href="#about">See how it works</a>
+        </div>
+        <p id="hero-hint" class="hero-hint">Move your cursor to look around</p>
+      </div>
+    </div>
+  </section>
+
+  <main class="page" id="about">
     <h1>Bachata Factory Helsinki</h1>
     <p class="tagline">An invite-only, peer-driven project for bachata dancers ready to grow.</p>
 
@@ -127,5 +146,9 @@
       </details>
     </div>
   </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="js/medusa-points.js"></script>
+  <script src="js/hero-medusa.js"></script>
 </body>
 </html>
