@@ -755,28 +755,84 @@ select:focus {
   color: var(--text-muted);
 }
 
-.hero-bottom {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.3rem;
+.hero-canvas {
+  transition: opacity 1s ease;
 }
 
-.hero-cta {
-  pointer-events: auto;
-  display: inline-block;
-  padding: 0.7rem 1.6rem;
+.hero--gone .hero-canvas {
+  opacity: 0;
+}
+
+/* number dial: 1-10 evenly spaced on a circle around the bust (js/hero-dial.js) */
+.hero-dial {
+  --r: min(40vmin, 320px);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+
+.hero-num {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
   border: 1px solid var(--gold);
-  border-radius: 999px;
+  border-radius: 50%;
+  background: rgba(11, 11, 12, 0.55);
   color: var(--gold);
-  text-decoration: none;
-  font-size: 0.92rem;
-  font-weight: 500;
-  transition: background 0.2s ease, color 0.2s ease;
+  font-family: "Playfair Display", serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: rotate(var(--angle)) translateY(calc(-0.85 * var(--r))) rotate(calc(-1 * var(--angle)));
+  transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+    background 0.2s ease, color 0.2s ease;
+  transition-delay: calc(var(--i) * 60ms), calc(var(--i) * 60ms), 0s, 0s;
 }
 
-.hero-cta:hover {
+.hero-dial.is-shown .hero-num {
+  opacity: 1;
+  pointer-events: auto;
+  transform: rotate(var(--angle)) translateY(calc(-1 * var(--r))) rotate(calc(-1 * var(--angle)));
+}
+
+.hero-num:hover,
+.hero-num:focus-visible {
+  background: rgba(200, 169, 106, 0.18);
+  outline: none;
+}
+
+.hero-num.is-hit {
   background: var(--gold);
   color: #1a1409;
+}
+
+.hero-dial.is-solved .hero-num {
+  background: var(--gold);
+  color: #1a1409;
+  transition-delay: 0s;
+}
+
+/* wrong order: numbers drift outward and fade as the bust flies apart */
+.hero-dial.is-gone .hero-num {
+  opacity: 0;
+  pointer-events: none;
+  transform: rotate(var(--angle)) translateY(calc(-1.6 * var(--r))) rotate(calc(-1 * var(--angle)));
+  transition: opacity 1.4s ease, transform 2.2s cubic-bezier(0.5, 0, 0.9, 0.4);
+  transition-delay: 0s;
+}
+
+@media (max-width: 480px) {
+  .hero-num {
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    font-size: 1rem;
+  }
 }

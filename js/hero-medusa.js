@@ -144,10 +144,11 @@
   // only render while the hero is on screen
   var visible = true;
   var running = false;
+  var finished = false;
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(function (entries) {
       visible = entries[0].isIntersecting;
-      if (visible && !running) {
+      if (visible && !running && !finished) {
         running = true;
         requestAnimationFrame(animate);
       }
@@ -155,17 +156,44 @@
   }
 
   var ENTRANCE_MS = reduceMotion ? 1 : 2600;
+  var EXIT_MS = reduceMotion ? 1 : 2600;
   var startTime = null;
+  var lastEased = 0;
+  var exitStart = null, exitFrom = 1;
+
+  // lets other scripts (the number dial) send the bust away: the entrance
+  // played in reverse, spheres flying back out, then the canvas fades out
+  window.medusaHero = {
+    disappear: function () {
+      if (exitStart !== null) return;
+      exitStart = performance.now();
+      exitFrom = lastEased;
+      setTimeout(function () { hero.classList.add("hero--gone"); }, EXIT_MS * 0.6);
+    }
+  };
 
   function animate(now) {
     if (!visible) {
       running = false;
       return;
     }
+    if (exitStart !== null && now - exitStart > EXIT_MS + 1200) {
+      running = false; // exit finished and canvas faded out: stop rendering
+      finished = true;
+      return;
+    }
     requestAnimationFrame(animate);
     if (startTime === null) startTime = now;
-    var t = Math.min(1, (now - startTime) / ENTRANCE_MS);
-    var eased = 1 - Math.pow(1 - t, 3);
+    var eased;
+    if (exitStart === null) {
+      var t = Math.min(1, (now - startTime) / ENTRANCE_MS);
+      eased = 1 - Math.pow(1 - t, 3);
+      lastEased = eased;
+    } else {
+      // entrance curve run backwards: slow start, accelerating outward
+      var tau = Math.min(1, Math.max(0, (now - exitStart) / EXIT_MS));
+      eased = exitFrom * (1 - tau * tau * tau);
+    }
 
     // cursor left -> model turns left; cursor up -> model tilts back
     var targetYaw = reduceMotion ? 0 : mouseX * 0.55;
