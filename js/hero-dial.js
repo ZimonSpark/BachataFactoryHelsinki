@@ -19,15 +19,23 @@
   var presses = 0;
   var locked = false;
 
+  // a fresh random arrangement of the numbers around the circle on every visit
+  var slots = [];
+  for (var s = 0; s < NUMBERS; s++) slots.push(s);
+  for (var sh = slots.length - 1; sh > 0; sh--) {
+    var pick = Math.floor(Math.random() * (sh + 1));
+    var tmp = slots[sh]; slots[sh] = slots[pick]; slots[pick] = tmp;
+  }
+
   for (var n = 1; n <= NUMBERS; n++) {
+    var slot = slots[n - 1]; // slot 0 is the top, then clockwise
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "hero-num";
     btn.textContent = String(n);
     btn.setAttribute("aria-label", "Number " + n);
-    // 1 at the top, then clockwise
-    btn.style.setProperty("--angle", ((n - 1) * 360 / NUMBERS) + "deg");
-    btn.style.setProperty("--i", String(n - 1));
+    btn.style.setProperty("--angle", (slot * 360 / NUMBERS) + "deg");
+    btn.style.setProperty("--i", String(slot)); // fade in clockwise around the circle
     btn.addEventListener("click", onPress.bind(null, n, btn));
     dial.appendChild(btn);
   }
