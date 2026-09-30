@@ -7,14 +7,13 @@
 
   var hero = document.getElementById("hero");
   var canvas = document.getElementById("hero-canvas");
-  var hint = document.getElementById("hero-hint");
   var POINTS = window.MEDUSA_POINTS;
   if (!hero || !canvas || !window.THREE || !POINTS) return;
 
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   var SCALE = 9.3;
-  var Y_SHIFT = 5.5;
+  var Y_SHIFT = -16; // centres the bust vertically on screen
   var JITTER = 0.006;
   var isNarrow = window.innerWidth < 480;
   var keepChance = isNarrow ? 0.62 : 1;
@@ -137,15 +136,10 @@
   window.addEventListener("resize", onResize);
 
   var mouseX = 0, mouseY = 0;
-  function hideHint() {
-    if (hint) hint.classList.add("hide");
-  }
   window.addEventListener("pointermove", function (e) {
     mouseX = (e.clientX / window.innerWidth) * 2 - 1;
     mouseY = (e.clientY / window.innerHeight) * 2 - 1;
-    hideHint();
   });
-  window.addEventListener("pointerdown", hideHint);
 
   // only render while the hero is on screen
   var visible = true;
