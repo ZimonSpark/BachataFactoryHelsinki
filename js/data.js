@@ -387,17 +387,6 @@ export async function setNotes(token, notes) {
   await firestore.updateDoc(firestore.doc(db, "dancers", token), { notes: value });
 }
 
-// Blue checkbox on the interested-people list — a plain manual tick/untick with no
-// other logic attached, purely for the admin's own tracking.
-export async function setInterestedChecked(token, checked) {
-  if (MOCK_MODE) {
-    mockDancers.get(token).interestedChecked = checked;
-    return;
-  }
-  const { db, firestore } = await getFirebase();
-  await firestore.updateDoc(firestore.doc(db, "dancers", token), { interestedChecked: checked });
-}
-
 // Manual override for the "sent nominations" indicator color, so the admin can flag a
 // dancer green/red by hand regardless of their actual sentNominationCount.
 export async function setQualifiedOverride(token, qualified) {
@@ -695,4 +684,51 @@ export async function setWaitingList(token, waitingList) {
   }
   const { db, firestore } = await getFirebase();
   await firestore.updateDoc(firestore.doc(db, "dancers", token), { waitingList });
+}
+
+// One-time migration (2026-09-30): the old "Interested people list" page (nominees not in
+// the team whose sent-nominations badge is green) is replaced by the waiting list. Everyone
+// who qualified there gets waitingList: true, and the page's blue-tick field
+// (interestedChecked) is deleted from every dancer. A marker doc in adminMeta makes sure
+// this only ever runs once, so later manual waiting-list changes are never overridden.
+// Returns { moved, cleaned } when it ran, or null when it had already run.
+export async function migrateInterestedToWaitingList(dancers) {
+  if (MOCK_MODE) return null;
+  const { db, firestore } = await getFirebase();
+  const markerRef = firestore.doc(db, "adminMeta", "migrations");
+  const marker = await firestore.getDoc(markerRef);
+  if (marker.exists() && marker.data().interestedToWaitingList) return null;
+
+  const wasInterested = (d) => {
+    if (d.inTeam) return false;
+    return typeof d.qualifiedOverride === "boolean" ? d.qualifiedOverride : (d.sentNominationCount || 0) >= 5;
+  };
+  const updates = [];
+  let moved = 0;
+  let cleaned = 0;
+  for (const d of dancers) {
+    const update = {};
+    if (wasInterested(d) && !d.waitingList) {
+      update.waitingList = true;
+      moved++;
+    }
+    if ("interestedChecked" in d) {
+      update.interestedChecked = firestore.deleteField();
+      cleaned++;
+    }
+    if (Object.keys(update).length) updates.push([d.id, update]);
+  }
+
+  // Firestore batches cap at 500 writes; stay well under.
+  for (let i = 0; i < updates.length; i += 400) {
+    const batch = firestore.writeBatch(db);
+    updates.slice(i, i + 400).forEach(([id, update]) => batch.update(firestore.doc(db, "dancers", id), update));
+    await batch.commit();
+  }
+  await firestore.setDoc(
+    markerRef,
+    { interestedToWaitingList: firestore.serverTimestamp(), interestedMoved: moved, interestedCleaned: cleaned },
+    { merge: true }
+  );
+  return { moved, cleaned };
 }

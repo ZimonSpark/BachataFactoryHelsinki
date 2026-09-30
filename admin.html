@@ -15,8 +15,6 @@
     <h1>Admin</h1>
     <p>
       <a href="calendar.html" class="subnav-link">Team calendar &rarr;</a>
-      &middot;
-      <a href="interested.html" class="subnav-link">Interested people list &rarr;</a>
     </p>
     <div id="content">
       <p class="muted">Loading&hellip;</p>
@@ -34,6 +32,7 @@
       addDancerManually,
       listNameChangeLog,
       syncWaitingListSignups,
+      migrateInterestedToWaitingList,
     } from "./js/data.js";
     import { escapeHtml, formatDate } from "./js/util.js";
     import { dancerRow, inviteUrl, wireDancerRowHandlers, startCountdownTicker } from "./js/dancer-row.js";
@@ -102,7 +101,13 @@
       }
       // fold any new public waiting-list sign-ups into dancer records first
       await syncWaitingListSignups().catch((err) => console.error("Failed to sync waiting list", err));
-      const [dancers, nameLog] = await Promise.all([listAllDancers(), listNameChangeLog()]);
+      let [dancers, nameLog] = await Promise.all([listAllDancers(), listNameChangeLog()]);
+      // one-time move of the old "interested people list" into the waiting list
+      const migration = await migrateInterestedToWaitingList(dancers).catch((err) => {
+        console.error("Interested -> waiting list migration failed", err);
+        return null;
+      });
+      if (migration) dancers = await listAllDancers();
       const scrollY = window.scrollY;
 
       refreshPublicStats(dancers).catch((err) => console.error("Failed to refresh public stats", err));
@@ -123,6 +128,11 @@
 
       content.innerHTML = `
         ${MOCK_MODE ? `<div class="notice info">Local preview mode: showing mock data, nothing is saved.</div>` : ""}
+        ${
+          migration
+            ? `<div class="notice success">Moved ${migration.moved} people from the old interested people list to the waiting list, and removed the old blue-tick field from ${migration.cleaned} records.</div>`
+            : ""
+        }
         <div class="card">
           <div class="stats-row stats-row--4">
             <div class="stat">
@@ -140,6 +150,10 @@
             <div class="stat">
               <span class="stat-number">${waitingConnectionCount}</span>
               <span class="stat-label">Waiting for connection</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${waitingListDancers.length}</span>
+              <span class="stat-label">On waiting list</span>
             </div>
             <div class="stat">
               <span class="stat-number">${leaderCount}</span>

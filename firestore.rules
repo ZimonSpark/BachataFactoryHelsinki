@@ -109,6 +109,11 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Admin-only bookkeeping, e.g. markers for one-time data migrations run from the dashboard.
+    match /adminMeta/{doc} {
+      allow read, write: if isAdmin();
+    }
+
     // Public waiting-list sign-ups from the about page. Anyone may add one (write-only,
     // strictly shaped); only the admin can read them back, and the admin dashboard marks
     // each processed once it's been folded into a dancer record (waitingList: true).

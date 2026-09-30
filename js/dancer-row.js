@@ -1,5 +1,5 @@
 // Shared dancer-row rendering + interaction logic used by every admin page that lists
-// dancers (admin.html, interested.html, ...). Keeping this in one place means every new
+// dancers (admin.html, ...). Keeping this in one place means every new
 // per-dancer action (toggle role, save notes, etc.) only needs to be wired once.
 
 import { escapeHtml, formatDate, nominationDeadlineMs, formatCountdown } from "./util.js";
@@ -17,7 +17,6 @@ import {
   setFlaggedRed,
   setInTeam,
   setRole,
-  setInterestedChecked,
   setWaitingList,
 } from "./data.js";
 
@@ -38,7 +37,7 @@ export function adminCountdownText(deadlineMs, sentCount) {
     : `${remaining} left &middot; ${sentCount}/5 nominated`;
 }
 
-export function dancerRow(d, { showInterestedCheckbox = false } = {}) {
+export function dancerRow(d) {
   const approved = d.status === "approved";
   const nominators = d.receivedNominators || [];
   const sentNames = d.sentNominatedNames || [];
@@ -47,22 +46,10 @@ export function dancerRow(d, { showInterestedCheckbox = false } = {}) {
   const flaggedRed = !!d.flaggedRed;
   const inTeam = !!d.inTeam;
   const role = d.role || null;
-  const interestedChecked = !!d.interestedChecked;
   const deadlineMs = approved ? nominationDeadlineMs(d.approvedAt) : null;
   return `
     <div class="dancer-row" data-token="${escapeHtml(d.id)}">
       <div class="dancer-row-main">
-        ${
-          showInterestedCheckbox
-            ? `<input
-                type="checkbox"
-                class="interested-checkbox"
-                data-toggle-interested="${escapeHtml(d.id)}"
-                ${interestedChecked ? "checked" : ""}
-                aria-label="Mark ${escapeHtml(d.name)}"
-              />`
-            : ""
-        }
         <button
           class="status-toggle"
           data-toggle-flag="${escapeHtml(d.id)}"
@@ -227,13 +214,6 @@ export function wireDancerRowHandlers(container, refresh) {
       if (!input.value.trim()) return;
       btn.disabled = true;
       await addNominator(token, input.value);
-      refresh();
-    });
-  });
-  container.querySelectorAll("[data-toggle-interested]").forEach((checkbox) => {
-    checkbox.addEventListener("change", async () => {
-      checkbox.disabled = true;
-      await setInterestedChecked(checkbox.dataset.toggleInterested, checkbox.checked);
       refresh();
     });
   });
