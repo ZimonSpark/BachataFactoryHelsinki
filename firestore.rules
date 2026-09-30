@@ -109,6 +109,27 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Public waiting-list sign-ups from the about page. Anyone may add one (write-only,
+    // strictly shaped); only the admin can read them back, and the admin dashboard marks
+    // each processed once it's been folded into a dancer record (waitingList: true).
+    match /waitingListSignups/{id} {
+      allow get, list: if isAdmin();
+      allow create: if isAdmin()
+                    || (request.resource.data.keys().hasOnly(['firstName', 'lastName', 'whatsapp', 'createdAt'])
+                        && request.resource.data.keys().hasAll(['firstName', 'lastName', 'whatsapp', 'createdAt'])
+                        && request.resource.data.firstName is string
+                        && request.resource.data.firstName.size() > 0
+                        && request.resource.data.firstName.size() <= 100
+                        && request.resource.data.lastName is string
+                        && request.resource.data.lastName.size() > 0
+                        && request.resource.data.lastName.size() <= 100
+                        && request.resource.data.whatsapp is string
+                        && request.resource.data.whatsapp.size() >= 6
+                        && request.resource.data.whatsapp.size() <= 40
+                        && request.resource.data.createdAt == request.time);
+      allow update, delete: if isAdmin();
+    }
+
     // Audit trail of self-service name edits, so the admin can spot misuse (e.g. someone
     // overwriting their name with a different real person's name). Write-only for the
     // public — only the admin can read it back.

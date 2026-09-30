@@ -18,6 +18,7 @@ import {
   setInTeam,
   setRole,
   setInterestedChecked,
+  setWaitingList,
 } from "./data.js";
 
 export function inviteUrl(token) {
@@ -90,6 +91,15 @@ export function dancerRow(d, { showInterestedCheckbox = false } = {}) {
           title="${d.contacted ? "Contacted" : "Not contacted yet"}"
         >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line></svg>
+        </button>
+        <button
+          class="secondary icon-button waitlist-toggle${d.waitingList ? " on-waitlist" : ""}"
+          data-waitlist="${escapeHtml(d.id)}"
+          data-on-waitlist="${d.waitingList ? "true" : "false"}"
+          aria-label="${d.waitingList ? "Remove from waiting list" : "Add to waiting list"}"
+          title="${d.waitingList ? "Subscribed for waiting list" : "Not on the waiting list"}"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="18" rx="2"></rect><path d="M9 2h6v4H9z"></path><line x1="9" y1="11" x2="15" y2="11"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
         </button>
         <button class="secondary" data-copy="${inviteUrl(d.id)}">Copy link</button>
         ${!approved ? `<button data-approve="${escapeHtml(d.id)}">Approve</button>` : ""}
@@ -275,6 +285,14 @@ export function wireDancerRowHandlers(container, refresh) {
       const nowContacted = btn.dataset.contacted !== "true";
       btn.disabled = true;
       await setContacted(btn.dataset.contact, nowContacted);
+      refresh();
+    });
+  });
+  container.querySelectorAll("[data-waitlist]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const nowOnList = btn.dataset.onWaitlist !== "true";
+      btn.disabled = true;
+      await setWaitingList(btn.dataset.waitlist, nowOnList);
       refresh();
     });
   });

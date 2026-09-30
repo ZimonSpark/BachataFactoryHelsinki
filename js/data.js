@@ -246,7 +246,8 @@ export async function getPublicStats() {
 // (the admin dashboard's own listAllDancers() result), so it doesn't need a second query.
 export async function refreshPublicStats(dancers) {
   if (MOCK_MODE) return;
-  const nomineeCount = dancers.length;
+  // people who only signed up for the waiting list were never nominated
+  const nomineeCount = dancers.filter((d) => d.source !== "waitingList").length;
   const totalNominations = dancers.reduce((sum, d) => sum + (d.receivedNominationCount || 0), 0);
   const { db, firestore } = await getFirebase();
   await firestore.setDoc(firestore.doc(db, "stats", "global"), { nomineeCount, totalNominations });
@@ -580,4 +581,118 @@ export async function createPendingNominee({ name, contact, nominatorNames }) {
   batch.set(indexRef, { token });
   await batch.commit();
   return token;
+}
+
+// ---------- Waiting list ----------
+// The public about page can't touch dancer records directly (only a token holder or the
+// admin may), so sign-ups land in their own write-only collection. The admin dashboard
+// then folds each new sign-up into the matching dancer record (matched by name, like
+// nominations) via syncWaitingListSignups, setting waitingList: true and filing the
+// WhatsApp number under contact.
+
+// Ephemeral, mock-mode-only sign-up store (resets on reload, same as the rest of mock state).
+const mockWaitingListSignups = [];
+
+export async function subscribeToWaitingList({ firstName, lastName, whatsapp }) {
+  const entry = { firstName: firstName.trim(), lastName: lastName.trim(), whatsapp: whatsapp.trim() };
+  if (!entry.firstName || !entry.lastName || !entry.whatsapp) throw new Error("Please fill in all fields.");
+  if (MOCK_MODE) {
+    mockWaitingListSignups.push({ ...entry, createdAt: new Date().toISOString() });
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.addDoc(firestore.collection(db, "waitingListSignups"), {
+    ...entry,
+    createdAt: firestore.serverTimestamp(),
+  });
+}
+
+function digitsOnly(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+// Files the WhatsApp number under contact without losing whatever was there before.
+function mergeContact(existing, number) {
+  const current = (existing || "").trim();
+  if (!current) return number;
+  if (digitsOnly(current).includes(digitsOnly(number))) return current;
+  return `${current} · WhatsApp ${number}`;
+}
+
+// Admin only. Processes every not-yet-processed sign-up: an existing dancer with the same
+// name gets waitingList: true and the number merged into contact; otherwise a new record
+// is created (source: "waitingList", no nominations). Returns how many were processed.
+export async function syncWaitingListSignups() {
+  if (MOCK_MODE) {
+    let count = 0;
+    while (mockWaitingListSignups.length) {
+      const s = mockWaitingListSignups.shift();
+      const name = `${s.firstName} ${s.lastName}`.trim();
+      const nameKey = normalizeKey(name);
+      const existing = [...mockDancers.values()].find((d) => d.nameKey === nameKey);
+      if (existing) {
+        existing.waitingList = true;
+        existing.contact = mergeContact(existing.contact, s.whatsapp);
+      } else {
+        mockDancers.set(generateToken(), {
+          name, contact: s.whatsapp, nameKey, status: "pending", receivedNominationCount: 0,
+          receivedNominators: [], sentNominationCount: 0, sentNominatedNames: [],
+          waitingList: true, source: "waitingList",
+        });
+      }
+      count++;
+    }
+    return count;
+  }
+
+  const { db, firestore } = await getFirebase();
+  const snap = await firestore.getDocs(firestore.collection(db, "waitingListSignups"));
+  const pending = snap.docs.filter((d) => !d.data().processed);
+  for (const signup of pending) {
+    const { firstName = "", lastName = "", whatsapp = "" } = signup.data();
+    const name = `${firstName.trim()} ${lastName.trim()}`.trim();
+    const nameKey = normalizeKey(name);
+    const number = whatsapp.trim();
+    const indexRef = firestore.doc(db, "nameIndex", nameDocId(nameKey));
+    const indexSnap = await firestore.getDoc(indexRef);
+    const batch = firestore.writeBatch(db);
+
+    let token = indexSnap.exists() ? indexSnap.data().token : null;
+    const dancerSnap = token ? await firestore.getDoc(firestore.doc(db, "dancers", token)) : null;
+    if (dancerSnap?.exists()) {
+      batch.update(dancerSnap.ref, {
+        waitingList: true,
+        contact: mergeContact(dancerSnap.data().contact, number),
+      });
+    } else {
+      token = generateToken();
+      batch.set(firestore.doc(db, "dancers", token), {
+        name,
+        contact: number,
+        nameKey,
+        status: "pending",
+        receivedNominationCount: 0,
+        receivedNominators: [],
+        sentNominationCount: 0,
+        sentNominatedNames: [],
+        waitingList: true,
+        source: "waitingList",
+        createdAt: firestore.serverTimestamp(),
+      });
+      batch.set(indexRef, { token });
+    }
+    batch.update(signup.ref, { processed: true, dancerToken: token, processedAt: firestore.serverTimestamp() });
+    await batch.commit();
+  }
+  return pending.length;
+}
+
+// Manual toggle from the admin row (same idea as setContacted).
+export async function setWaitingList(token, waitingList) {
+  if (MOCK_MODE) {
+    mockDancers.get(token).waitingList = waitingList;
+    return;
+  }
+  const { db, firestore } = await getFirebase();
+  await firestore.updateDoc(firestore.doc(db, "dancers", token), { waitingList });
 }

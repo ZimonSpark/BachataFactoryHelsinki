@@ -33,6 +33,7 @@
       refreshPublicStats,
       addDancerManually,
       listNameChangeLog,
+      syncWaitingListSignups,
     } from "./js/data.js";
     import { escapeHtml, formatDate } from "./js/util.js";
     import { dancerRow, inviteUrl, wireDancerRowHandlers, startCountdownTicker } from "./js/dancer-row.js";
@@ -43,6 +44,48 @@
     window.addEventListener("pageshow", (e) => {
       if (e.persisted) location.reload();
     });
+
+    // Open/closed state of the collapsible dancer sections, kept across the full
+    // re-renders every row action triggers (and across visits via localStorage).
+    const SECTION_STATE_KEY = "bfh-admin-sections";
+    let sectionOpen = {};
+    try {
+      sectionOpen = JSON.parse(localStorage.getItem(SECTION_STATE_KEY) || "{}");
+    } catch {}
+    function isSectionOpen(key) {
+      return sectionOpen[key] !== false;
+    }
+    function rememberSections() {
+      content.querySelectorAll("details[data-section]").forEach((el) => {
+        sectionOpen[el.dataset.section] = el.open;
+      });
+      try {
+        localStorage.setItem(SECTION_STATE_KEY, JSON.stringify(sectionOpen));
+      } catch {}
+    }
+
+    function roleStats(list, totalLabel) {
+      return `
+        <div class="stats-row stats-row--4">
+          <div class="stat">
+            <span class="stat-number">${list.length}</span>
+            <span class="stat-label">${totalLabel}</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">${list.filter((d) => d.role === "L").length}</span>
+            <span class="stat-label">Leaders</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">${list.filter((d) => d.role === "F").length}</span>
+            <span class="stat-label">Followers</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">${list.filter((d) => d.role === "LF").length}</span>
+            <span class="stat-label">Both</span>
+          </div>
+        </div>
+      `;
+    }
 
     function nameLogRow(entry) {
       return `
@@ -57,24 +100,26 @@
       if (showLoading) {
         content.innerHTML = `<p class="muted">Loading dancers&hellip;</p>`;
       }
+      // fold any new public waiting-list sign-ups into dancer records first
+      await syncWaitingListSignups().catch((err) => console.error("Failed to sync waiting list", err));
       const [dancers, nameLog] = await Promise.all([listAllDancers(), listNameChangeLog()]);
       const scrollY = window.scrollY;
 
       refreshPublicStats(dancers).catch((err) => console.error("Failed to refresh public stats", err));
 
-      const totalCount = dancers.length;
+      // waiting-list-only sign-ups were never nominated, so they stay out of nominee stats
+      const nominees = dancers.filter((d) => d.source !== "waitingList");
+      const totalCount = nominees.length;
       const totalNominations = dancers.reduce((sum, d) => sum + (d.receivedNominationCount || 0), 0);
-      const waitingApprovalCount = dancers.filter((d) => d.status !== "approved" && !d.flaggedRed).length;
+      const waitingApprovalCount = nominees.filter((d) => d.status !== "approved" && !d.flaggedRed).length;
       const waitingConnectionCount = dancers.filter((d) => !d.contacted && !d.flaggedRed).length;
       const leaderCount = dancers.filter((d) => d.role === "L").length;
       const followerCount = dancers.filter((d) => d.role === "F").length;
       const bothCount = dancers.filter((d) => d.role === "LF").length;
       const teamDancers = dancers.filter((d) => d.inTeam);
-      const teamLeaderCount = teamDancers.filter((d) => d.role === "L").length;
-      const teamFollowerCount = teamDancers.filter((d) => d.role === "F").length;
-      const teamBothCount = teamDancers.filter((d) => d.role === "LF").length;
-      const pendingDancers = dancers.filter((d) => !d.inTeam && d.status !== "approved");
-      const approvedDancers = dancers.filter((d) => !d.inTeam && d.status === "approved");
+      const waitingListDancers = dancers.filter((d) => !d.inTeam && d.waitingList);
+      const pendingDancers = dancers.filter((d) => !d.inTeam && !d.waitingList && d.status !== "approved");
+      const approvedDancers = dancers.filter((d) => !d.inTeam && !d.waitingList && d.status === "approved");
 
       content.innerHTML = `
         ${MOCK_MODE ? `<div class="notice info">Local preview mode: showing mock data, nothing is saved.</div>` : ""}
@@ -111,34 +156,34 @@
           </div>
         </div>
         <div class="card">
-          <h2 style="font-size:1.2rem">Dancers in the team</h2>
-          <div class="stats-row stats-row--4">
-            <div class="stat">
-              <span class="stat-number">${teamDancers.length}</span>
-              <span class="stat-label">Total in team</span>
+          <details data-section="team"${isSectionOpen("team") ? " open" : ""}>
+            <summary class="section-summary">Dancers in the team (${teamDancers.length})</summary>
+            <div class="details-body">
+              ${roleStats(teamDancers, "Total in team")}
+              ${teamDancers.length ? teamDancers.map(dancerRow).join("") : `<p class="muted">No dancers in the team yet.</p>`}
             </div>
-            <div class="stat">
-              <span class="stat-number">${teamLeaderCount}</span>
-              <span class="stat-label">Leaders</span>
+          </details>
+        </div>
+        <div class="card">
+          <details data-section="waitingList"${isSectionOpen("waitingList") ? " open" : ""}>
+            <summary class="section-summary">Waiting list (${waitingListDancers.length})</summary>
+            <div class="details-body">
+              ${roleStats(waitingListDancers, "On waiting list")}
+              ${waitingListDancers.length ? waitingListDancers.map(dancerRow).join("") : `<p class="muted">Nobody on the waiting list yet.</p>`}
             </div>
-            <div class="stat">
-              <span class="stat-number">${teamFollowerCount}</span>
-              <span class="stat-label">Followers</span>
-            </div>
-            <div class="stat">
-              <span class="stat-number">${teamBothCount}</span>
-              <span class="stat-label">Both</span>
-            </div>
-          </div>
-          ${teamDancers.length ? teamDancers.map(dancerRow).join("") : `<p class="muted">No dancers in the team yet.</p>`}
+          </details>
         </div>
         <div class="card">
           <h2 style="font-size:1.2rem">Nomination waiting for approval</h2>
           ${pendingDancers.length ? pendingDancers.map(dancerRow).join("") : `<p class="muted">No nominations waiting for approval.</p>`}
         </div>
         <div class="card">
-          <h2 style="font-size:1.2rem">Nominated dancers</h2>
-          ${approvedDancers.length ? approvedDancers.map(dancerRow).join("") : `<p class="muted">No approved dancers yet.</p>`}
+          <details data-section="nominated"${isSectionOpen("nominated") ? " open" : ""}>
+            <summary class="section-summary">Nominated dancers (${approvedDancers.length})</summary>
+            <div class="details-body">
+              ${approvedDancers.length ? approvedDancers.map(dancerRow).join("") : `<p class="muted">No approved dancers yet.</p>`}
+            </div>
+          </details>
         </div>
         <div class="card">
           <details>
@@ -169,6 +214,9 @@
       `;
       window.scrollTo(0, scrollY);
 
+      content.querySelectorAll("details[data-section]").forEach((el) => {
+        el.addEventListener("toggle", rememberSections);
+      });
       wireDancerRowHandlers(content, () => renderDashboard({ showLoading: false }));
 
       document.getElementById("seed-form").addEventListener("submit", async (e) => {

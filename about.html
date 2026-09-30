@@ -38,7 +38,14 @@
       <details>
         <summary>When and where is BFH held?</summary>
         <div class="details-body">
-          <p>BFH is held weekly in Vallila. The first project will start in mid-September and finish by the end of November.</p>
+          <p>
+            BFH is held weekly, every Friday, at OddSpace Vallila. The first project starts in
+            mid-September 2026 and finishes by the end of November.
+          </p>
+          <p>
+            Depending on its success and the funds available, there will be more projects and
+            batches, and the activities will continue and possibly spread to multiple groups.
+          </p>
         </div>
       </details>
     </div>
@@ -48,13 +55,66 @@
         <summary>Who can take part in this project?</summary>
         <div class="details-body">
           <p>
-            To improve the focus and cooperation between team members, this project is aimed at a
-            restricted group of 16 to 20 dancers. Only the people who have been nominated can take
-            part in BFH.
+            In the interest of focus and cooperation between team members, this project is aimed
+            at a restricted group of 16 to 20 dancers. Only the people chosen by the organiser
+            board can take part in BFH.
+          </p>
+          <p>
+            It is possible to be invited as a guest for one-off events. Guests are chosen from the
+            waiting list: if you would like to join it, please leave your full name and WhatsApp
+            number below.
           </p>
         </div>
       </details>
     </div>
+
+    <div class="card" id="waiting-list">
+      <h2 style="font-size: 1.2rem">Join the waiting list</h2>
+      <p class="muted">To be considered as a guest, please insert your full name and WhatsApp number</p>
+      <form id="waitlist-form">
+        <div class="name-form-row">
+          <input type="text" id="wlFirstName" placeholder="First Name" aria-label="First name" autocomplete="given-name" maxlength="100" required />
+          <input type="text" id="wlLastName" placeholder="Last Name" aria-label="Last name" autocomplete="family-name" maxlength="100" required />
+        </div>
+        <div class="name-form-row">
+          <input type="tel" id="wlWhatsapp" placeholder="WhatsApp number, e.g. +358 40 123 4567" aria-label="WhatsApp number" autocomplete="tel" maxlength="40" required />
+        </div>
+        <div class="actions">
+          <button type="submit">Save</button>
+        </div>
+      </form>
+      <div id="waitlist-message"></div>
+    </div>
   </main>
+
+  <script type="module">
+    import { subscribeToWaitingList } from "./js/data.js";
+    import { escapeHtml } from "./js/util.js";
+
+    const form = document.getElementById("waitlist-form");
+    const messageEl = document.getElementById("waitlist-message");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const firstName = document.getElementById("wlFirstName").value;
+      const lastName = document.getElementById("wlLastName").value;
+      const whatsapp = document.getElementById("wlWhatsapp").value;
+      const digits = whatsapp.replace(/\D/g, "");
+      if (digits.length < 6 || !/^[+\d\s()-]+$/.test(whatsapp.trim())) {
+        messageEl.innerHTML = `<div class="notice error">Please enter a valid WhatsApp number.</div>`;
+        return;
+      }
+      const submitBtn = form.querySelector("button[type=submit]");
+      submitBtn.disabled = true;
+      try {
+        await subscribeToWaitingList({ firstName, lastName, whatsapp });
+        form.remove();
+        messageEl.innerHTML = `<div class="notice success">Thank you, ${escapeHtml(firstName.trim())}! You are on the waiting list.</div>`;
+      } catch (err) {
+        messageEl.innerHTML = `<div class="notice error">Something went wrong: ${escapeHtml(err.message)}</div>`;
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
