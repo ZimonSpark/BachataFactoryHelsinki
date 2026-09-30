@@ -36,6 +36,8 @@
     btn.setAttribute("aria-label", "Number " + n);
     btn.style.setProperty("--angle", (slot * 360 / NUMBERS) + "deg");
     btn.style.setProperty("--i", String(slot)); // fade in clockwise around the circle
+    // top half of the circle (slots 0-2 and 8-9) vs bottom half, for the phone spread
+    btn.style.setProperty("--dy", Math.cos(slot * 2 * Math.PI / NUMBERS) > 0 ? "-1" : "1");
     btn.addEventListener("click", onPress.bind(null, n, btn));
     dial.appendChild(btn);
   }

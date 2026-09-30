@@ -766,6 +766,7 @@ select:focus {
 /* number dial: 1-10 evenly spaced on a circle around the bust (js/hero-dial.js) */
 .hero-dial {
   --r: min(40vmin, 320px);
+  --spread: 0px; /* phones: pushes the top five numbers up and the bottom five down */
   position: absolute;
   left: 50%;
   top: 50%;
@@ -798,7 +799,7 @@ select:focus {
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transform: rotate(var(--angle)) translateY(calc(-0.85 * var(--r))) rotate(calc(-1 * var(--angle)));
+  transform: translateY(calc(var(--dy, 0) * var(--spread))) rotate(var(--angle)) translateY(calc(-0.85 * var(--r))) rotate(calc(-1 * var(--angle)));
   transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
     background 0.2s ease, color 0.2s ease;
   transition-delay: calc(var(--i) * 60ms), calc(var(--i) * 60ms), 0s, 0s;
@@ -807,7 +808,7 @@ select:focus {
 .hero-dial.is-shown .hero-num {
   opacity: 1;
   pointer-events: auto;
-  transform: rotate(var(--angle)) translateY(calc(-1 * var(--r))) rotate(calc(-1 * var(--angle)));
+  transform: translateY(calc(var(--dy, 0) * var(--spread))) rotate(var(--angle)) translateY(calc(-1 * var(--r))) rotate(calc(-1 * var(--angle)));
 }
 
 .hero-num:hover,
@@ -831,7 +832,7 @@ select:focus {
 .hero-dial.is-gone .hero-num {
   opacity: 0;
   pointer-events: none;
-  transform: rotate(var(--angle)) translateY(calc(-1.6 * var(--r))) rotate(calc(-1 * var(--angle)));
+  transform: translateY(calc(var(--dy, 0) * var(--spread))) rotate(var(--angle)) translateY(calc(-1.6 * var(--r))) rotate(calc(-1 * var(--angle)));
   transition: opacity 1.4s ease, transform 2.2s cubic-bezier(0.5, 0, 0.9, 0.4);
   transition-delay: 0s;
 }
@@ -866,6 +867,10 @@ select:focus {
 }
 
 @media (max-width: 480px) {
+  .hero-dial {
+    --spread: 12vh;
+  }
+
   .hero-num {
     width: 48px;
     height: 48px;
