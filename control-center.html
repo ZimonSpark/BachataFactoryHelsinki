@@ -12,7 +12,7 @@
     .cc h1 { font-size: clamp(1.7rem, 5vw, 2.4rem); margin: 0; }
     .cc h2 { font-size: 1.3rem; margin: 2.5rem 0 1rem; }
     .cc .muted { color: var(--text-muted); font-size: .9rem; }
-    .cc-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    .cc-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); }
     .cc-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.2rem; min-width: 0; }
     .cc-card h3 { margin: 0 0 .25rem; color: var(--text); font-size: 1.05rem; font-family: "Inter", system-ui, sans-serif; font-weight: 600; }
     .cc-card p { margin: .5rem 0; font-size: .92rem; }
@@ -44,6 +44,17 @@
     .kind-warning { color: var(--gold); }
     .kind-error { color: var(--danger); }
     .empty { color: var(--text-muted); font-style: italic; }
+    .st-skipped { color: var(--text-muted); }
+    .cc-tags { display: flex; gap: .35rem; flex-wrap: wrap; }
+    .cc-tag.pf-instagram { color: #ef6fb6; border-color: #4a2238; }
+    .cc-tag.pf-facebook { color: #7aa6ff; border-color: #22304a; }
+    .cc-stats { display: flex; flex-wrap: wrap; gap: .5rem; margin: .6rem 0; }
+    .cc-stat { background: #1f1f22; border: 1px solid var(--border); border-radius: 8px; padding: .35rem .6rem; font-size: .8rem; color: var(--text-muted); }
+    .cc-stat b { display: block; color: var(--text); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+    .run .mx { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .3rem .9rem; font-size: .8rem; color: var(--text-muted); }
+    .run .mx b { color: var(--text-body); font-variant-numeric: tabular-nums; }
+    .cc-group { margin-top: 1.5rem; }
+    .cc-group h3.gh { font-family: "Inter", system-ui, sans-serif; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 .7rem; }
     @media (min-width: 640px) { .run .when { grid-column: auto; } .run summary { grid-template-columns: 7.5rem 9rem 1fr; } }
   </style>
 </head>
@@ -77,25 +88,33 @@
     };
     const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     const safeUrl = u => /^https:\/\//.test(u || "") ? u : null;
-    const statusLabel = s => ({ ok: "OK", warning: "Warning", error: "Error" }[s] || "Not run yet");
-    const st = s => `<span class="st st-${["ok", "warning", "error"].includes(s) ? s : "none"}">${statusLabel(s)}</span>`;
+    const statusLabel = s => ({ ok: "OK", warning: "Warning", error: "Error", skipped: "Skipped" }[s] || "Not run yet");
+    const st = s => `<span class="st st-${["ok", "warning", "error", "skipped"].includes(s) ? s : "none"}">${statusLabel(s)}</span>`;
+    const statBoxes = o => o && Object.keys(o).length ? `<div class="cc-stats">${Object.entries(o).map(([k, v]) => `<span class="cc-stat"><b>${esc(v)}</b>${esc(k)}</span>`).join("")}</div>` : "";
 
     let data, filter = "all";
 
     function renderTasks() {
       const el = document.getElementById("tasks");
-      el.innerHTML = data.tasks.map(t => `
+      const card = t => `
         <article class="cc-card">
-          <span class="cc-tag">${esc(t.project)}</span>
+          <div class="cc-tags"><span class="cc-tag">${esc(t.project)}</span>${t.platform ? `<span class="cc-tag pf-${esc(t.platform.toLowerCase())}">${esc(t.platform)}</span>` : ""}</div>
           <h3>${esc(t.name)}</h3>
           <p>${esc(t.description)}</p>
+          ${statBoxes(t.stats)}
           <dl class="cc-kv">
             <dt>Schedule</dt><dd>${esc(t.schedule)}</dd>
             <dt>Last run</dt><dd>${fmt(t.lastRunAt)}</dd>
             <dt>Result</dt><dd>${st(t.lastStatus)}</dd>
           </dl>
           <div class="cc-links">${(t.links || []).filter(l => safeUrl(l.url)).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}</div>
-        </article>`).join("") || `<p class="empty">No tasks yet.</p>`;
+        </article>`;
+      const groups = [...new Set(data.tasks.map(t => t.platform || "Other"))];
+      el.classList.remove("cc-grid");
+      el.innerHTML = groups.map(g => `
+        <div class="cc-group"><h3 class="gh">${esc(g)}</h3>
+          <div class="cc-grid">${data.tasks.filter(t => (t.platform || "Other") === g).map(card).join("")}</div>
+        </div>`).join("") || `<p class="empty">No tasks yet.</p>`;
     }
 
     function renderFilter() {
@@ -114,6 +133,7 @@
             ${st(r.status)}
             <span class="when">${fmt(r.startedAt)}${r.manual ? " · by hand" : ""}</span>
             <span class="sum"><span class="muted">${esc(names[r.taskId] || r.taskId)} — </span>${esc(r.summary)}</span>
+            ${r.metrics && Object.keys(r.metrics).length ? `<span class="mx">${Object.entries(r.metrics).map(([k, v]) => `<span>${esc(k)} <b>${esc(v)}</b></span>`).join("")}</span>` : ""}
           </summary>
           ${(r.details || []).length ? `<ul>${r.details.map(d => `
             <li><span class="kind kind-${esc(d.kind)}">${esc(d.kind)}</span>${safeUrl(d.link) ? `<a href="${esc(d.link)}" target="_blank" rel="noopener">${esc(d.title)}</a>` : esc(d.title)}${d.note ? ` <span class="muted">— ${esc(d.note)}</span>` : ""}</li>`).join("")}</ul>` : ""}

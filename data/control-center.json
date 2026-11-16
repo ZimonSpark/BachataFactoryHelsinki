@@ -9,10 +9,90 @@
       "firstRun": "2027-01-01T09:00:00+02:00",
       "description": "Checks every upcoming SBS event on WeDance. Creates any missing event in the BACHATA CLUB Nights Facebook group (and invites the group), and updates existing ones whose name, time, place, description or poster no longer match WeDance.",
       "links": [
-        { "label": "WeDance organizer page", "url": "https://appwedance.com/en/organizers/63bf9627-2199-4335-b9ea-0bd665382deb" },
-        { "label": "Facebook group", "url": "https://www.facebook.com/groups/2257083065071105" }
+        {
+          "label": "WeDance organizer page",
+          "url": "https://appwedance.com/en/organizers/63bf9627-2199-4335-b9ea-0bd665382deb"
+        },
+        {
+          "label": "Facebook group",
+          "url": "https://www.facebook.com/groups/2257083065071105"
+        }
       ],
       "lastRunAt": "2026-11-16T18:10:00+02:00",
+      "lastStatus": "ok",
+      "platform": "Facebook"
+    },
+    {
+      "id": "ig-follow-batch",
+      "name": "Follow batch",
+      "project": "Bachata Club",
+      "platform": "Instagram",
+      "schedule": "Daily 12:13, 16:13, 20:13 (Helsinki) · max 20 per run, 60 per day",
+      "description": "Follows followers of other Helsinki dance accounts who have a profile picture and haven't been followed before, 60-120 s apart. Any sign of throttling pauses all Instagram tasks for 48 h. Never unfollows.",
+      "links": [
+        {
+          "label": "@bachataclubnights",
+          "url": "https://www.instagram.com/bachataclubnights/"
+        }
+      ],
+      "lastRunAt": "2026-11-16T08:59:35Z",
+      "lastStatus": "error",
+      "stats": {
+        "Followed (last 7 days)": 122,
+        "Daily cap": 60
+      }
+    },
+    {
+      "id": "ig-followers-sync",
+      "name": "Followers sync",
+      "project": "Bachata Club",
+      "platform": "Instagram",
+      "schedule": "Daily 22:17 (Helsinki)",
+      "description": "Saves who follows @bachataclubnights and who it follows (on this PC, not here), counts new followers, lost followers and follow-backs, and updates the follow-back rate.",
+      "links": [
+        {
+          "label": "@bachataclubnights",
+          "url": "https://www.instagram.com/bachataclubnights/"
+        }
+      ],
+      "lastRunAt": "2026-11-16T14:43:22Z",
+      "lastStatus": "ok",
+      "stats": {
+        "Followers": 522,
+        "Following": 698,
+        "Follow-back rate": "from 25 Nov"
+      }
+    },
+    {
+      "id": "ig-bio-next-event",
+      "name": "Bio: next party date",
+      "project": "Bachata Club",
+      "platform": "Instagram",
+      "schedule": "Daily 11:47 (Helsinki) · logs only when it changes something or needs you",
+      "description": "Keeps 'Next event: DD/MM/YYYY' in the Instagram bio on the next WeDance party. Changes only the date; if the bio was rewritten by hand it leaves it alone and warns.",
+      "links": [
+        {
+          "label": "@bachataclubnights",
+          "url": "https://www.instagram.com/bachataclubnights/"
+        }
+      ],
+      "lastRunAt": "2026-11-14T09:51:00Z",
+      "lastStatus": "error"
+    },
+    {
+      "id": "ig-friday-highlight",
+      "name": "Friday party highlight",
+      "project": "Bachata Club",
+      "platform": "Instagram",
+      "schedule": "Tuesdays 10:23 (Helsinki)",
+      "description": "After each WeDance party, puts all archived stories from Friday to Monday into one new highlight 'Night N (DD.MM.)'. Counts first and saves only if the selection matches exactly. Never edits existing highlights.",
+      "links": [
+        {
+          "label": "@bachataclubnights",
+          "url": "https://www.instagram.com/bachataclubnights/"
+        }
+      ],
+      "lastRunAt": "2026-11-11T12:30:00Z",
       "lastStatus": "ok"
     }
   ],
@@ -32,6 +112,321 @@
           "link": "https://www.facebook.com/events/1779672786642812/"
         }
       ]
+    },
+    {
+      "taskId": "ig-followers-sync",
+      "startedAt": "2026-11-16T14:38:22Z",
+      "finishedAt": "2026-11-16T14:43:22Z",
+      "status": "ok",
+      "summary": "522 followers (+12 / -1), 698 following (+32 / -9); 8 follow-backs",
+      "metrics": {
+        "Follow backs": 8,
+        "Followers": 522,
+        "Following": 698,
+        "Gained": 12,
+        "Lost": 1
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-16T08:59:27Z",
+      "finishedAt": "2026-11-16T08:59:35Z",
+      "status": "error",
+      "summary": "Not run: no Chrome browser connected (list_connected_browsers empty)",
+      "metrics": {
+        "Followed": 0,
+        "Skipped no picture": 0
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-15T18:07:49Z",
+      "finishedAt": "2026-11-15T18:39:42Z",
+      "status": "ok",
+      "summary": "Followed 25 (15 following, 10 requested), skipped 3 without profile picture",
+      "metrics": {
+        "Followed": 25,
+        "Skipped no picture": 3
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-15T16:56:47Z",
+      "finishedAt": "2026-11-15T17:30:30Z",
+      "status": "ok",
+      "summary": "Followed 25 (22 requested, 3 following), skipped 2 without profile picture",
+      "metrics": {
+        "Followed": 25,
+        "Skipped no picture": 2
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-followers-sync",
+      "startedAt": "2026-11-15T16:56:45Z",
+      "finishedAt": "2026-11-15T17:01:07Z",
+      "status": "ok",
+      "summary": "511 followers (+14 / -0), 682 following (+39 / -2); 8 follow-backs",
+      "metrics": {
+        "Follow backs": 8,
+        "Followers": 511,
+        "Following": 675,
+        "Gained": 14,
+        "Lost": 0
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-bio-next-event",
+      "startedAt": "2026-11-14T09:48:04Z",
+      "finishedAt": "2026-11-14T09:51:00Z",
+      "status": "error",
+      "summary": "Not updated: the only connected Chrome browser is logged into a different Instagram account (not bachataclubnights). Bio should change to Next event: 27/11/2026.",
+      "metrics": {},
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-13T22:10:01Z",
+      "finishedAt": "2026-11-13T22:10:32Z",
+      "status": "error",
+      "summary": "Not run: the only connected Chrome is logged into Instagram as a different account, not bachataclubnights",
+      "metrics": {
+        "Followed": 0,
+        "Skipped no picture": 0
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-13T20:08:24Z",
+      "finishedAt": "2026-11-13T20:10:30Z",
+      "status": "error",
+      "summary": "Not run: the only connected Chrome is logged into Instagram as a different account, not bachataclubnights",
+      "metrics": {
+        "Followed": 0,
+        "Skipped no picture": 0
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-13T18:08:25Z",
+      "finishedAt": "2026-11-13T18:08:47Z",
+      "status": "error",
+      "summary": "Not run: the only connected Chrome is logged into Instagram as a different account, not bachataclubnights",
+      "metrics": {
+        "Followed": 0,
+        "Skipped no picture": 0
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-13T16:10:21Z",
+      "finishedAt": "2026-11-13T16:10:46Z",
+      "status": "error",
+      "summary": "Not run: only connected Chrome is logged into Instagram as a different account, not bachataclubnights",
+      "metrics": {
+        "Followed": 0,
+        "Skipped no picture": 0
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-followers-sync",
+      "startedAt": "2026-11-13T15:48:37Z",
+      "finishedAt": "2026-11-13T15:49:30Z",
+      "status": "error",
+      "summary": "Not run: the only connected Chrome is logged into Instagram as a different account, not bachataclubnights. Saved lists left unchanged.",
+      "metrics": {},
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-13T10:42:06Z",
+      "finishedAt": "2026-11-13T11:01:21Z",
+      "status": "warning",
+      "summary": "Followed 10, skipped 11 without profile picture; stopped early when a follow click did not register",
+      "metrics": {
+        "Followed": 10,
+        "Skipped no picture": 11
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-12T22:08:20Z",
+      "finishedAt": "2026-11-12T22:34:14Z",
+      "status": "warning",
+      "summary": "Followed 16 (8 requested, 8 following), skipped 10 without profile picture; stopped early when a follow click did not register",
+      "metrics": {
+        "Followed": 16,
+        "Skipped no picture": 10
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-12T20:08:18Z",
+      "finishedAt": "2026-11-12T20:26:00Z",
+      "status": "warning",
+      "summary": "Followed 9, skipped 7 without profile picture; stopped early because a follow click did not register",
+      "metrics": {
+        "Followed": 9,
+        "Skipped no picture": 7
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-12T18:08:28Z",
+      "finishedAt": "2026-11-12T18:28:30Z",
+      "status": "warning",
+      "summary": "Followed 8, skipped 7 without profile picture; stopped early because Chrome disconnected",
+      "metrics": {
+        "Followed": 8,
+        "Skipped no picture": 7
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-12T16:09:19Z",
+      "finishedAt": "2026-11-12T16:42:56Z",
+      "status": "ok",
+      "summary": "Followed 25 (11 requested, 14 following), skipped 10 without profile picture",
+      "metrics": {
+        "Followed": 25,
+        "Skipped no picture": 10
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-followers-sync",
+      "startedAt": "2026-11-12T15:55:54Z",
+      "finishedAt": "2026-11-12T16:01:12Z",
+      "status": "ok",
+      "summary": "497 followers (+5 / -2), 638 following (+26 / -8; profile reports 647); 4 follow-backs",
+      "metrics": {
+        "Follow backs": 4,
+        "Followers": 497,
+        "Following": 638,
+        "Gained": 5,
+        "Lost": 2
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-12T07:00:28Z",
+      "finishedAt": "2026-11-12T07:00:47Z",
+      "status": "error",
+      "summary": "Not run: the only connected Chrome is logged into Instagram as a different account, not bachataclubnights",
+      "metrics": {
+        "Followed": 0,
+        "Skipped no picture": 0
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-11T22:08:07Z",
+      "finishedAt": "2026-11-11T22:50:36Z",
+      "status": "ok",
+      "summary": "Followed 25, skipped 7 without profile picture",
+      "metrics": {
+        "Followed": 25,
+        "Skipped no picture": 7
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-11T21:36:26Z",
+      "finishedAt": "2026-11-11T21:45:30Z",
+      "status": "warning",
+      "summary": "Followed 3, skipped 2 without profile picture; stopped early because Chrome disconnected",
+      "metrics": {
+        "Followed": 3,
+        "Skipped no picture": 2
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-followers-sync",
+      "startedAt": "2026-11-11T14:37:55Z",
+      "finishedAt": "2026-11-11T14:44:00Z",
+      "status": "warning",
+      "summary": "494 followers (+1 / -0), 633 following (list 620 unique); 1 follow-back. Following diff +9 / -11 may be partly paging noise.",
+      "metrics": {
+        "Follow backs": 1,
+        "Followers": 494,
+        "Following": 633,
+        "Gained": 1,
+        "Lost": 0
+      },
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-bio-next-event",
+      "startedAt": "2026-11-11T12:13:00Z",
+      "finishedAt": "2026-11-11T12:16:00Z",
+      "status": "ok",
+      "summary": "Bio next event 30/10/2026 -> 13/11/2026 (first run, done by hand)",
+      "metrics": {},
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-friday-highlight",
+      "startedAt": "2026-11-11T12:00:00Z",
+      "finishedAt": "2026-11-11T12:30:00Z",
+      "status": "ok",
+      "summary": "Created 5 highlights for parties 9 Oct to 6 Nov (45 stories, Friday to Monday each). Verified against the archive.",
+      "metrics": {},
+      "imported": true,
+      "details": []
+    },
+    {
+      "taskId": "ig-followers-sync",
+      "startedAt": "2026-11-11T11:05:00Z",
+      "finishedAt": "2026-11-11T11:35:00Z",
+      "status": "ok",
+      "summary": "First snapshot: 493 followers, 622 of 632 following returned. 326 mutual, 296 we follow without follow-back, 167 follow us without follow-back.",
+      "metrics": {
+        "Fans": 167,
+        "Followers": 493,
+        "Following": 622,
+        "Mutual": 326,
+        "No follow back": 296
+      },
+      "imported": true,
+      "details": []
     }
   ]
 }
