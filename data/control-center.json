@@ -454,5 +454,40 @@
       "imported": true,
       "details": []
     }
-  ]
+  ],
+  "instagram": {
+    "daily": [
+      {
+        "date": "2026-11-11",
+        "followed": 3,
+        "followedBack": 0,
+        "waiting": 3,
+        "unfollowed": 0
+      },
+      {
+        "date": "2026-11-12",
+        "followed": 48,
+        "followedBack": 9,
+        "waiting": 39,
+        "unfollowed": 0
+      },
+      {
+        "date": "2026-11-13",
+        "followed": 22,
+        "followedBack": 2,
+        "waiting": 20,
+        "unfollowed": 0
+      },
+      {
+        "date": "2026-11-15",
+        "followed": 49,
+        "followedBack": 12,
+        "waiting": 37,
+        "unfollowed": 0
+      }
+    ],
+    "snapshotAt": "2026-11-16T14:38:22Z",
+    "followers": 522,
+    "following": 698
+  }
 }
