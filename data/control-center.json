@@ -94,6 +94,23 @@
       ],
       "lastRunAt": "2026-11-11T12:30:00Z",
       "lastStatus": "ok"
+    },
+    {
+      "id": "ig-unfollow-cleanup",
+      "name": "Unfollow clean-up",
+      "project": "Bachata Club",
+      "platform": "Instagram",
+      "schedule": "Sundays 14:13 (Helsinki) · max 30 per run · first run waits for Simon's OK",
+      "description": "Unfollows accounts that the follow batch followed 21+ days ago and that never followed back. Never touches older follows (friends, venues, partners) or anyone on the keep list. Skips if the follower lists are more than 36 h old.",
+      "links": [
+        {
+          "label": "@bachataclubnights",
+          "url": "https://www.instagram.com/bachataclubnights/"
+        }
+      ],
+      "stats": {
+        "Status": "waiting for first approval"
+      }
     }
   ],
   "runs": [
