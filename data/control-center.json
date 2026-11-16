@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-16T19:44:00+02:00",
+  "updatedAt": "2026-11-16T20:49:30+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,11 +35,12 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-16T08:59:35Z",
-      "lastStatus": "error",
+      "lastRunAt": "2026-11-16T20:49:30+02:00",
+      "lastStatus": "ok",
       "stats": {
-        "Followed (last 7 days)": 122,
-        "Daily cap": 60
+        "Followed (last 7 days)": "142",
+        "Follow-back rate (14 days)": "not enough data yet",
+        "Daily cap": "60"
       }
     },
     {
@@ -130,6 +131,19 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-16T20:24:00+02:00",
+      "finishedAt": "2026-11-16T20:49:30+02:00",
+      "status": "ok",
+      "summary": "Followed 20 (16 following, 4 requested), skipped 3 without profile picture",
+      "metrics": {
+        "Followed": 20,
+        "Requested": 4,
+        "Skipped (no picture)": 3,
+        "Today": 20
+      }
+    },
     {
       "taskId": "ig-party-notes",
       "manual": true,
@@ -508,6 +522,13 @@
         "followed": 49,
         "followedBack": 12,
         "waiting": 37,
+        "unfollowed": 0
+      },
+      {
+        "date": "2026-11-16",
+        "followed": 20,
+        "followedBack": 0,
+        "waiting": 20,
         "unfollowed": 0
       }
     ],
