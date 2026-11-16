@@ -1,0 +1,37 @@
+{
+  "updatedAt": "2026-11-16T18:10:00+02:00",
+  "tasks": [
+    {
+      "id": "facebook-wedance-sync",
+      "name": "Facebook events ← WeDance",
+      "project": "Bachata Club",
+      "schedule": "Mondays 09:00 (Helsinki), from 1 Jan 2027",
+      "firstRun": "2027-01-01T09:00:00+02:00",
+      "description": "Checks every upcoming SBS event on WeDance. Creates any missing event in the BACHATA CLUB Nights Facebook group (and invites the group), and updates existing ones whose name, time, place, description or poster no longer match WeDance.",
+      "links": [
+        { "label": "WeDance organizer page", "url": "https://appwedance.com/en/organizers/63bf9627-2199-4335-b9ea-0bd665382deb" },
+        { "label": "Facebook group", "url": "https://www.facebook.com/groups/2257083065071105" }
+      ],
+      "lastRunAt": "2026-11-16T18:10:00+02:00",
+      "lastStatus": "ok"
+    }
+  ],
+  "runs": [
+    {
+      "taskId": "facebook-wedance-sync",
+      "manual": true,
+      "startedAt": "2026-11-16T17:30:00+02:00",
+      "finishedAt": "2026-11-16T18:10:00+02:00",
+      "status": "ok",
+      "summary": "First run, done by hand: created the Season Finale event in the Facebook group.",
+      "details": [
+        {
+          "kind": "created",
+          "title": "BACHATA CLUB Season Finale!! — Fri 27 Nov 2026",
+          "note": "Description and prices from WeDance, poster from the posters folder. Group members not invited.",
+          "link": "https://www.facebook.com/events/1779672786642812/"
+        }
+      ]
+    }
+  ]
+}

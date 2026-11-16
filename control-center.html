@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Bachata Club Control Center</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .cc { max-width: 960px; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+    .cc header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1rem; margin-bottom: 2rem; }
+    .cc h1 { font-size: clamp(1.7rem, 5vw, 2.4rem); margin: 0; }
+    .cc h2 { font-size: 1.3rem; margin: 2.5rem 0 1rem; }
+    .cc .muted { color: var(--text-muted); font-size: .9rem; }
+    .cc-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    .cc-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.2rem; min-width: 0; }
+    .cc-card h3 { margin: 0 0 .25rem; color: var(--text); font-size: 1.05rem; font-family: "Inter", system-ui, sans-serif; font-weight: 600; }
+    .cc-card p { margin: .5rem 0; font-size: .92rem; }
+    .cc-tag { display: inline-block; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-soft); border: 1px solid #3a3326; border-radius: 999px; padding: .1rem .55rem; }
+    .cc-kv { display: grid; grid-template-columns: auto 1fr; gap: .2rem .8rem; font-size: .88rem; margin: .7rem 0; }
+    .cc-kv dt { color: var(--text-muted); }
+    .cc-kv dd { margin: 0; color: var(--text-body); }
+    .cc a { color: var(--gold-soft); }
+    .cc-links { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .88rem; }
+    .st { display: inline-flex; align-items: center; gap: .4rem; font-weight: 600; font-size: .85rem; }
+    .st::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: currentColor; }
+    .st-ok { color: var(--success); }
+    .st-warning { color: var(--gold); }
+    .st-error { color: var(--danger); }
+    .st-none { color: var(--text-muted); }
+    .cc-filter { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .cc-filter button { background: transparent; color: var(--text-body); border: 1px solid var(--border); border-radius: 999px; padding: .35rem .9rem; font: inherit; font-size: .85rem; cursor: pointer; }
+    .cc-filter button[aria-pressed="true"] { background: var(--burgundy); border-color: var(--red-deep); color: var(--text); }
+    .run { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: .75rem; }
+    .run summary { font-family: "Inter", system-ui, sans-serif; font-weight: 400; list-style: none; cursor: pointer; padding: .9rem 1.1rem; display: grid; grid-template-columns: auto 1fr; gap: .2rem 1rem; align-items: baseline; }
+    .run summary::-webkit-details-marker { display: none; }
+    .run .when { color: var(--text-muted); font-size: .85rem; grid-column: 1 / -1; }
+    .run .sum { color: var(--text); font-size: .95rem; min-width: 0; overflow-wrap: anywhere; }
+    .run ul { margin: 0; padding: 0 1.1rem 1rem 2.4rem; font-size: .9rem; }
+    .run li { margin: .35rem 0; overflow-wrap: anywhere; }
+    .kind { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-right: .4rem; }
+    .kind-created { color: var(--success); }
+    .kind-updated { color: var(--gold-soft); }
+    .kind-warning { color: var(--gold); }
+    .kind-error { color: var(--danger); }
+    .empty { color: var(--text-muted); font-style: italic; }
+    @media (min-width: 640px) { .run .when { grid-column: auto; } .run summary { grid-template-columns: 7.5rem 9rem 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="cc">
+    <header>
+      <h1>Bachata Club Control Center</h1>
+      <span class="muted" id="updated">Loading…</span>
+    </header>
+
+    <section aria-labelledby="tasks-h">
+      <h2 id="tasks-h">Automatic tasks</h2>
+      <div class="cc-grid" id="tasks"></div>
+    </section>
+
+    <section aria-labelledby="runs-h">
+      <h2 id="runs-h">Run history</h2>
+      <div class="cc-filter" id="filter" role="group" aria-label="Filter runs by task"></div>
+      <div id="runs"></div>
+    </section>
+  </main>
+
+  <script>
+    const fmt = (iso, withTime = true) => {
+      if (!iso) return "—";
+      const d = new Date(iso);
+      return d.toLocaleString("en-GB", {
+        timeZone: "Europe/Helsinki", weekday: "short", day: "numeric", month: "short", year: "numeric",
+        ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {})
+      });
+    };
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const safeUrl = u => /^https:\/\//.test(u || "") ? u : null;
+    const statusLabel = s => ({ ok: "OK", warning: "Warning", error: "Error" }[s] || "Not run yet");
+    const st = s => `<span class="st st-${["ok", "warning", "error"].includes(s) ? s : "none"}">${statusLabel(s)}</span>`;
+
+    let data, filter = "all";
+
+    function renderTasks() {
+      const el = document.getElementById("tasks");
+      el.innerHTML = data.tasks.map(t => `
+        <article class="cc-card">
+          <span class="cc-tag">${esc(t.project)}</span>
+          <h3>${esc(t.name)}</h3>
+          <p>${esc(t.description)}</p>
+          <dl class="cc-kv">
+            <dt>Schedule</dt><dd>${esc(t.schedule)}</dd>
+            <dt>Last run</dt><dd>${fmt(t.lastRunAt)}</dd>
+            <dt>Result</dt><dd>${st(t.lastStatus)}</dd>
+          </dl>
+          <div class="cc-links">${(t.links || []).filter(l => safeUrl(l.url)).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}</div>
+        </article>`).join("") || `<p class="empty">No tasks yet.</p>`;
+    }
+
+    function renderFilter() {
+      const el = document.getElementById("filter");
+      const opts = [{ id: "all", name: "All" }, ...data.tasks];
+      el.innerHTML = opts.map(o => `<button type="button" data-id="${esc(o.id)}" aria-pressed="${o.id === filter}">${esc(o.name)}</button>`).join("");
+      el.onclick = e => { const b = e.target.closest("button"); if (!b) return; filter = b.dataset.id; renderFilter(); renderRuns(); };
+    }
+
+    function renderRuns() {
+      const names = Object.fromEntries(data.tasks.map(t => [t.id, t.name]));
+      const runs = data.runs.filter(r => filter === "all" || r.taskId === filter);
+      document.getElementById("runs").innerHTML = runs.map((r, i) => `
+        <details class="run"${i === 0 ? " open" : ""}>
+          <summary>
+            ${st(r.status)}
+            <span class="when">${fmt(r.startedAt)}${r.manual ? " · by hand" : ""}</span>
+            <span class="sum"><span class="muted">${esc(names[r.taskId] || r.taskId)} — </span>${esc(r.summary)}</span>
+          </summary>
+          ${(r.details || []).length ? `<ul>${r.details.map(d => `
+            <li><span class="kind kind-${esc(d.kind)}">${esc(d.kind)}</span>${safeUrl(d.link) ? `<a href="${esc(d.link)}" target="_blank" rel="noopener">${esc(d.title)}</a>` : esc(d.title)}${d.note ? ` <span class="muted">— ${esc(d.note)}</span>` : ""}</li>`).join("")}</ul>` : ""}
+        </details>`).join("") || `<p class="empty">No runs yet.</p>`;
+    }
+
+    fetch("data/control-center.json?t=" + Date.now(), { cache: "no-store" })
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(d => {
+        data = d;
+        document.getElementById("updated").textContent = "Updated " + fmt(d.updatedAt);
+        renderTasks(); renderFilter(); renderRuns();
+      })
+      .catch(err => { document.getElementById("updated").textContent = "Could not load data (" + err.message + ")"; });
+  </script>
+</body>
+</html>
