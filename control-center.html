@@ -55,6 +55,16 @@
     .run .mx b { color: var(--text-body); font-variant-numeric: tabular-nums; }
     .cc-group { margin-top: 1.5rem; }
     .cc-group h3.gh { font-family: "Inter", system-ui, sans-serif; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 .7rem; }
+    .cc-collapse { margin-top: 2.5rem; }
+    .cc-collapse > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; flex-wrap: wrap; gap: .3rem .9rem; padding: 0; font: inherit; color: inherit; }
+    .cc-collapse > summary::-webkit-details-marker { display: none; }
+    .cc-collapse > summary::before { content: "▸"; color: var(--gold-soft); font-size: 1rem; transition: transform .15s; display: inline-block; }
+    .cc-collapse[open] > summary::before { transform: rotate(90deg); }
+    .cc-collapse > summary::after { content: none !important; }
+    .cc-collapse > summary h2 { margin: 0; }
+    .cc-collapse > summary:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 4px; border-radius: 4px; }
+    .cc-collapse #tasks { margin-top: .5rem; }
+    @media (prefers-reduced-motion: reduce) { .cc-collapse > summary::before { transition: none; } }
     /* Follow timeline — dark-surface steps of the validated categorical palette */
     .fl-viz { --fl-back: #3987e5; --fl-wait: #85837d; --fl-unf: #d95926; --fl-grid: #2a2a2d; --fl-axis: #8f8d89;
       position: relative; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.2rem 1rem; }
@@ -97,11 +107,6 @@
       <span class="muted" id="updated">Loading…</span>
     </header>
 
-    <section aria-labelledby="tasks-h">
-      <h2 id="tasks-h">Automatic tasks</h2>
-      <div class="cc-grid" id="tasks"></div>
-    </section>
-
     <section aria-labelledby="fl-h" id="fl-section" hidden>
       <h2 id="fl-h">Instagram follows, day by day</h2>
       <p class="muted fl-sub">Each bar is one day of the follow batch, split by what happened to those people since.</p>
@@ -115,6 +120,13 @@
         <div class="fl-tip" id="fl-tip" role="status" hidden></div>
         <details class="fl-table"><summary>Show as table</summary><div id="fl-table"></div></details>
       </div>
+    </section>
+
+    <section>
+      <details class="cc-collapse" id="tasks-box">
+        <summary><h2 id="tasks-h">Automatic tasks</h2><span class="muted" id="tasks-count"></span></summary>
+        <div id="tasks"></div>
+      </details>
     </section>
 
     <section aria-labelledby="runs-h">
@@ -156,6 +168,11 @@
           </dl>
           <div class="cc-links">${(t.links || []).filter(l => safeUrl(l.url)).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}</div>
         </article>`;
+      const probs = data.tasks.filter(t => t.lastStatus === "error" || t.lastStatus === "warning").length;
+      document.getElementById("tasks-count").textContent = `${data.tasks.length} tasks` + (probs ? ` · ${probs} need${probs === 1 ? "s" : ""} attention` : " · all OK");
+      const box = document.getElementById("tasks-box");
+      try { box.open = localStorage.getItem("cc-tasks-open") === "1"; } catch (_) {}
+      box.ontoggle = () => { try { localStorage.setItem("cc-tasks-open", box.open ? "1" : "0"); } catch (_) {} };
       const groups = [...new Set(data.tasks.map(t => t.platform || "Other"))];
       el.classList.remove("cc-grid");
       el.innerHTML = groups.map(g => `
