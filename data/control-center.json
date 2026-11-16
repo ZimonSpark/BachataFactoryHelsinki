@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-16T18:10:00+02:00",
+  "updatedAt": "2026-11-16T19:08:00+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -76,8 +76,8 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-14T09:51:00Z",
-      "lastStatus": "error"
+      "lastRunAt": "2026-11-16T19:08:00+02:00",
+      "lastStatus": "ok"
     },
     {
       "id": "ig-friday-highlight",
@@ -97,6 +97,15 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-bio-next-event",
+      "manual": true,
+      "startedAt": "2026-11-16T19:05:00+02:00",
+      "finishedAt": "2026-11-16T19:08:00+02:00",
+      "status": "ok",
+      "summary": "Bio next event 13/11/2026 → 27/11/2026 (done by hand while setting up the new tasks)",
+      "details": []
+    },
     {
       "taskId": "facebook-wedance-sync",
       "manual": true,
