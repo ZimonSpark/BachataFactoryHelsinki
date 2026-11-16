@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-16T20:49:30+02:00",
+  "updatedAt": "2026-11-16T22:30:36+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -56,12 +56,12 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-16T14:43:22Z",
-      "lastStatus": "ok",
+      "lastRunAt": "2026-11-16T22:30:36+02:00",
+      "lastStatus": "warning",
       "stats": {
-        "Followers": 522,
-        "Following": 698,
-        "Follow-back rate": "from 25 Nov"
+        "Followers": "527",
+        "Following": "729",
+        "Follow-back rate (14 days)": "not enough data yet"
       }
     },
     {
@@ -131,6 +131,32 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-followers-sync",
+      "startedAt": "2026-11-16T22:23:42+02:00",
+      "finishedAt": "2026-11-16T22:30:36+02:00",
+      "status": "warning",
+      "summary": "527 followers (+5 / -0), 729 following; 3 follow-backs. Following list incomplete: got 700 of 729, losses not counted.",
+      "metrics": {
+        "Followers": 527,
+        "New followers": 5,
+        "Lost followers": 0,
+        "Follow-backs": 3,
+        "Following": 729
+      },
+      "details": [
+        {
+          "kind": "updated",
+          "title": "Followers list",
+          "note": "Complete: 527 of 527"
+        },
+        {
+          "kind": "warning",
+          "title": "Following list",
+          "note": "list incomplete: got 700 of 729, losses not counted"
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-16T20:24:00+02:00",
@@ -527,13 +553,13 @@
       {
         "date": "2026-11-16",
         "followed": 20,
-        "followedBack": 0,
-        "waiting": 20,
+        "followedBack": 3,
+        "waiting": 17,
         "unfollowed": 0
       }
     ],
-    "snapshotAt": "2026-11-16T14:38:22Z",
-    "followers": 522,
-    "following": 698
+    "snapshotAt": "2026-11-16T20:30:30Z",
+    "followers": 527,
+    "following": 721
   }
 }
