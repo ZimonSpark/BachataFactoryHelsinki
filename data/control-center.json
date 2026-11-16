@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-16T19:08:00+02:00",
+  "updatedAt": "2026-11-16T19:44:00+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -111,9 +111,34 @@
       "stats": {
         "Status": "waiting for first approval"
       }
+    },
+    {
+      "id": "ig-party-notes",
+      "name": "Party Notes (DM bubble)",
+      "project": "Bachata Club",
+      "platform": "Instagram",
+      "schedule": "Daily ~10:10 (Helsinki) · posts only 2 days and 1 day before a party",
+      "description": "Posts a 24-hour Instagram Note above the DM inbox: 2 days before ('Fri 15.01 BACHATA CLUB Night 💃 21:00') and the day before ('Tomorrow! BACHATA CLUB Night 🕺 21:00'). Text built from WeDance, no venue, default cloud colour.",
+      "links": [
+        {
+          "label": "@bachataclubnights",
+          "url": "https://www.instagram.com/bachataclubnights/"
+        }
+      ],
+      "lastRunAt": "2026-11-16T19:44:00+02:00",
+      "lastStatus": "ok"
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-party-notes",
+      "manual": true,
+      "startedAt": "2026-11-16T19:40:00+02:00",
+      "finishedAt": "2026-11-16T19:44:00+02:00",
+      "status": "ok",
+      "summary": "Test Note posted by hand: 'Fri 27.11 BACHATA CLUB Season Finale 🍕 ODDSpace 18:00' (from now on without venue)",
+      "details": []
+    },
     {
       "taskId": "ig-bio-next-event",
       "manual": true,
