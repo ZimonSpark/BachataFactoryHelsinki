@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T16:52:25+02:00",
+  "updatedAt": "2026-11-17T17:46:38+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -93,8 +93,8 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-17T10:33:00+02:00",
-      "lastStatus": "error"
+      "lastRunAt": "2026-11-17T17:46:38+02:00",
+      "lastStatus": "ok"
     },
     {
       "id": "ig-unfollow-cleanup",
@@ -131,6 +131,24 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-friday-highlight",
+      "startedAt": "2026-11-17T17:42:22+02:00",
+      "finishedAt": "2026-11-17T17:46:38+02:00",
+      "status": "ok",
+      "summary": "Created Night 9 (13.11.) with 16 stories (Fri–Mon)",
+      "metrics": {
+        "Stories in window": 16,
+        "In highlight": 16
+      },
+      "details": [
+        {
+          "kind": "created",
+          "title": "Night 9 (13.11.)",
+          "note": "13 Nov: 1, 14 Nov: 14, 15 Nov: 0, 16 Nov: 1; default cover"
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-17T16:18:51+02:00",
