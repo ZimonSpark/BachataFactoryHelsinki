@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T17:46:38+02:00",
+  "updatedAt": "2026-11-17T20:50:36+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,10 +35,10 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-17T16:52:25+02:00",
+      "lastRunAt": "2026-11-17T20:50:36+02:00",
       "lastStatus": "ok",
       "stats": {
-        "Followed (last 7 days)": "179",
+        "Followed (last 7 days)": "199",
         "Follow-back rate (14 days)": "not enough data yet",
         "Daily cap": "60"
       }
@@ -131,6 +131,26 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-17T20:18:53+02:00",
+      "finishedAt": "2026-11-17T20:50:36+02:00",
+      "status": "ok",
+      "summary": "Followed 20 (14 following, 6 requested), skipped 6 without profile picture; daily cap of 60 reached.",
+      "metrics": {
+        "Followed": 20,
+        "Requested": 6,
+        "Skipped (no picture)": 6,
+        "Today": 60
+      },
+      "details": [
+        {
+          "kind": "warning",
+          "title": "Only one source account left",
+          "note": "The first ~450 followers of the single source are mostly followed already; add more sources to instagram/config.json soon."
+        }
+      ]
+    },
     {
       "taskId": "ig-friday-highlight",
       "startedAt": "2026-11-17T17:42:22+02:00",
@@ -650,9 +670,9 @@
       },
       {
         "date": "2026-11-17",
-        "followed": 40,
+        "followed": 60,
         "followedBack": 0,
-        "waiting": 40,
+        "waiting": 60,
         "unfollowed": 0
       }
     ],
