@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T00:13:03+02:00",
+  "updatedAt": "2026-11-17T10:33:00+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -93,8 +93,8 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-11T12:30:00Z",
-      "lastStatus": "ok"
+      "lastRunAt": "2026-11-17T10:33:00+02:00",
+      "lastStatus": "error"
     },
     {
       "id": "ig-unfollow-cleanup",
@@ -131,6 +131,20 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-friday-highlight",
+      "startedAt": "2026-11-17T10:30:56+02:00",
+      "finishedAt": "2026-11-17T10:33:00+02:00",
+      "status": "error",
+      "summary": "Instagram tasks blocked: Chrome is not logged in as bachataclubnights (found: no browser)",
+      "details": [
+        {
+          "kind": "error",
+          "title": "Night 9 (13.11.) not created",
+          "note": "No Chrome browser connected; highlight for Fri 13.11. still pending"
+        }
+      ]
+    },
     {
       "taskId": "ig-followers-sync",
       "startedAt": "2026-11-17T00:05:59+02:00",
