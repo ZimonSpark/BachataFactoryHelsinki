@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-18T20:53:00+02:00",
+  "updatedAt": "2026-11-18T22:33:30+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -56,11 +56,11 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-17T22:33:00+02:00",
+      "lastRunAt": "2026-11-18T22:33:30+02:00",
       "lastStatus": "warning",
       "stats": {
-        "Followers": "547",
-        "Following": "785",
+        "Followers": "559",
+        "Following": "817",
         "Follow-back rate (14 days)": "not enough data yet"
       }
     },
@@ -131,6 +131,37 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-followers-sync",
+      "startedAt": "2026-11-18T22:23:40+02:00",
+      "finishedAt": "2026-11-18T22:33:30+02:00",
+      "status": "warning",
+      "summary": "559 followers (+13 / -1), 817 following; 11 follow-backs. Following list incomplete: got 747 of 817, losses not counted.",
+      "metrics": {
+        "Followers": 559,
+        "New followers": 13,
+        "Lost followers": 1,
+        "Follow-backs": 11,
+        "Following": 817
+      },
+      "details": [
+        {
+          "kind": "updated",
+          "title": "Followers list",
+          "note": "Complete: 559 of 559 read."
+        },
+        {
+          "kind": "warning",
+          "title": "Following list incomplete",
+          "note": "Instagram loaded 747 of 817; missing accounts kept from the previous snapshot, not counted as dropped. 37 new follows detected."
+        },
+        {
+          "kind": "warning",
+          "title": "Fallback browser",
+          "note": "The always-on Lenovo Chrome was not connected; used the main laptop's Chrome (logged in as bachataclubnights)."
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-18T20:19:01+02:00",
@@ -743,20 +774,20 @@
       {
         "date": "2026-11-17",
         "followed": 60,
-        "followedBack": 14,
-        "waiting": 46,
+        "followedBack": 18,
+        "waiting": 42,
         "unfollowed": 0
       },
       {
         "date": "2026-11-18",
         "followed": 60,
-        "followedBack": 3,
-        "waiting": 57,
+        "followedBack": 10,
+        "waiting": 50,
         "unfollowed": 0
       }
     ],
-    "snapshotAt": "2026-11-17T20:32:25Z",
-    "followers": 547,
-    "following": 769
+    "snapshotAt": "2026-11-18T20:32:14Z",
+    "followers": 559,
+    "following": 806
   }
 }
