@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-23T12:50:05+02:00",
+  "updatedAt": "2026-11-23T16:18:56+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,8 +35,8 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-23T12:50:05+02:00",
-      "lastStatus": "ok",
+      "lastRunAt": "2026-11-23T16:18:56+02:00",
+      "lastStatus": "error",
       "stats": {
         "Followed (last 7 days)": "185",
         "Follow-back rate (14 days)": "not enough data yet",
@@ -131,6 +131,26 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-23T16:18:42+02:00",
+      "finishedAt": "2026-11-23T16:18:56+02:00",
+      "status": "error",
+      "summary": "Instagram tasks blocked: Chrome is not logged in as bachataclubnights (found: no browser)",
+      "metrics": {
+        "Followed": 0,
+        "Requested": 0,
+        "Skipped (no picture)": 0,
+        "Today": 20
+      },
+      "details": [
+        {
+          "kind": "error",
+          "title": "No Chrome browser connected",
+          "note": "Claude in Chrome reported no connected browsers; 0 of 20 planned follows done."
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-23T12:18:48+02:00",
