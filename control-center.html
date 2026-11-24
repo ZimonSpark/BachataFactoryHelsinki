@@ -97,6 +97,10 @@
     .fl-table th:first-child, .fl-table td:first-child { text-align: left; white-space: nowrap; }
     .fl-table th { color: var(--text-muted); font-weight: 500; }
     .fl-wrap { overflow-x: auto; }
+    .cc-nav { display: flex; flex-wrap: wrap; gap: .6rem; margin: -1rem 0 1.5rem; }
+    .cc .cc-btn { display: inline-flex; align-items: center; gap: .4rem; background: var(--burgundy); border: 1px solid var(--red-deep); color: var(--text); border-radius: 999px; padding: .5rem 1.1rem; font-size: .92rem; font-weight: 500; text-decoration: none; }
+    .cc .cc-btn:hover { background: var(--red-deep); }
+    .cc .cc-btn:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 3px; }
     @media (min-width: 640px) { .run .when { grid-column: auto; } .run summary { grid-template-columns: 7.5rem 9rem 1fr; } }
   </style>
 </head>
@@ -106,6 +110,10 @@
       <h1>Bachata Club Control Center</h1>
       <span class="muted" id="updated">Loading…</span>
     </header>
+
+    <nav class="cc-nav" aria-label="Control Center pages">
+      <a class="cc-btn" href="outreach.html">Outreach contacts &rarr;</a>
+    </nav>
 
     <section aria-labelledby="fl-h" id="fl-section" hidden>
       <h2 id="fl-h">Instagram follows, day by day</h2>

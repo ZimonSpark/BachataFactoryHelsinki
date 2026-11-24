@@ -206,6 +206,28 @@ export async function signOutAdmin() {
   await authMod.signOut(auth);
 }
 
+// Outreach tracker (WhatsApp campaigns): written by the local BFH-outreach CLI, read here
+// by outreach.html. Admin-only end to end (phone numbers live here).
+export async function listOutreach() {
+  if (MOCK_MODE) return { contacts: [], messages: [], campaigns: [] };
+  const { db, firestore } = await getFirebase();
+  const toPlain = (v) => (v && typeof v.toDate === "function" ? v.toDate().toISOString() : v);
+  const read = async (name) => {
+    const snap = await firestore.getDocs(firestore.collection(db, name));
+    return snap.docs.map((d) => {
+      const o = { id: d.id };
+      for (const [k, v] of Object.entries(d.data())) o[k] = toPlain(v);
+      return o;
+    });
+  };
+  const [contacts, messages, campaigns] = await Promise.all([
+    read("outreachContacts"),
+    read("outreachMessages"),
+    read("outreachCampaigns"),
+  ]);
+  return { contacts, messages, campaigns };
+}
+
 export async function listAllDancers() {
   let list;
   if (MOCK_MODE) {

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Outreach Contacts</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .ot { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+    .ot header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1rem; margin-bottom: 1.5rem; }
+    .ot h1 { font-size: clamp(1.7rem, 5vw, 2.4rem); margin: 0; }
+    .ot h2 { font-size: 1.3rem; margin: 2.2rem 0 1rem; }
+    .ot a { color: var(--gold-soft); }
+    .ot .muted { color: var(--text-muted); font-size: .9rem; }
+    .ot-back { font-size: .9rem; display: inline-block; margin-bottom: 1rem; }
+    .ot-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.2rem; }
+    .ot-card h3 { margin: 0 0 .25rem; color: var(--text); font-size: 1.05rem; font-family: "Inter", system-ui, sans-serif; font-weight: 600; }
+    .ot-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); }
+    .ot-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(110px, 100%), 1fr)); gap: .5rem; margin: .8rem 0 .4rem; }
+    .ot-tile { border: 1px solid var(--border); border-radius: 10px; padding: .45rem .65rem; }
+    .ot-tile .k { font-size: .75rem; color: var(--text-muted); }
+    .ot-tile .v { font-size: 1.35rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1.2; }
+    .ot-bar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: .8rem; }
+    .ot-bar input[type=search] { flex: 1 1 220px; min-width: 0; background: #0f0f10; color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: .45rem .9rem; font: inherit; font-size: .9rem; }
+    .ot-filter { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .ot-filter button { background: transparent; color: var(--text-body); border: 1px solid var(--border); border-radius: 999px; padding: .35rem .85rem; font: inherit; font-size: .82rem; cursor: pointer; }
+    .ot-filter button[aria-pressed="true"] { background: var(--burgundy); border-color: var(--red-deep); color: var(--text); }
+    .ot-wrap { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
+    .ot table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .ot th, .ot td { text-align: left; padding: .5rem .7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .ot th { color: var(--text-muted); font-weight: 500; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; cursor: pointer; user-select: none; }
+    .ot th[aria-sort] { color: var(--gold-soft); }
+    .ot td { color: var(--text-body); }
+    .ot td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .ot td.nowrap { white-space: nowrap; }
+    .ot tr:last-child td { border-bottom: none; }
+    .ot .name { color: var(--text); font-weight: 500; }
+    .pill { display: inline-block; font-size: .72rem; letter-spacing: .04em; border-radius: 999px; padding: .08rem .55rem; border: 1px solid var(--border); white-space: nowrap; }
+    .o-going { color: var(--success); border-color: #2a4a33; }
+    .o-maybe, .o-replied { color: var(--gold-soft); border-color: #3a3326; }
+    .o-not-going, .o-no-reply { color: var(--text-muted); }
+    .o-stop, .o-dnc { color: var(--danger); border-color: #4a1c22; }
+    .o-unchecked { color: var(--text-muted); border-style: dashed; }
+    .notice { padding: .8rem 1rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); }
+    .notice.error { border-color: var(--red-deep); }
+    .ot-msgs summary { cursor: pointer; color: var(--gold-soft); font-size: .88rem; margin-top: .6rem; }
+    .ot-msgs pre { white-space: pre-wrap; font: inherit; font-size: .85rem; color: var(--text-body); background: #0f0f10; border: 1px solid var(--border); border-radius: 8px; padding: .7rem .8rem; margin: .5rem 0 0; }
+  </style>
+</head>
+<body>
+  <main class="ot">
+    <a class="ot-back" href="control-center.html">&larr; Control Center</a>
+    <header>
+      <h1>Outreach contacts</h1>
+      <span class="muted" id="who"></span>
+    </header>
+    <div id="content"><p class="muted">Loading&hellip;</p></div>
+  </main>
+
+  <script type="module">
+    import { MOCK_MODE, onAdminAuthChange, signInAdmin, signOutAdmin, listOutreach } from "./js/data.js";
+
+    const content = document.getElementById("content");
+    const who = document.getElementById("who");
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const fmt = (iso, withTime = false) => {
+      if (!iso) return "—";
+      return new Date(iso).toLocaleString("en-GB", {
+        timeZone: "Europe/Helsinki", day: "numeric", month: "short", year: "numeric",
+        ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
+      });
+    };
+    const OUTCOME_LABEL = { going: "Going", maybe: "Maybe", "not-going": "Not going", replied: "Replied", "no-reply": "No reply", stop: "Asked to stop" };
+    const outcomePill = (o) => o ? `<span class="pill o-${esc(o)}">${esc(OUTCOME_LABEL[o] || o)}</span>` : `<span class="pill o-unchecked">Not checked</span>`;
+
+    let data, query = "", filter = "all", sortKey = "lastContactedAt", sortDir = -1;
+
+    const FILTERS = [
+      ["all", "All"],
+      ["replied", "Replied"],
+      ["unchecked", "Reply not checked"],
+      ["dnc", "Do not contact"],
+      ["ig", "Has Instagram"],
+      ["noig", "No Instagram"],
+    ];
+    const COLS = [
+      ["name", "Name"], ["phone", "WhatsApp"], ["instagram", "Instagram"], ["messageCount", "Msgs"],
+      ["replyCount", "Replies"], ["lastContactedAt", "Last contacted"], ["lastCampaignId", "Last campaign"], ["lastOutcome", "Last outcome"],
+    ];
+
+    function campaignCards() {
+      const camps = [...data.campaigns].sort((a, b) => String(b.id).localeCompare(String(a.id)));
+      if (!camps.length) return `<p class="muted">No campaigns logged yet.</p>`;
+      return `<div class="ot-grid">${camps.map((c) => {
+        const msgs = data.messages.filter((m) => m.campaignId === c.id);
+        const replied = msgs.filter((m) => m.replied === true).length;
+        const checked = msgs.filter((m) => m.replied !== null && m.replied !== undefined).length;
+        const going = msgs.filter((m) => m.outcome === "going").length;
+        const stop = msgs.filter((m) => m.outcome === "stop").length;
+        const rate = msgs.length ? Math.round((replied / msgs.length) * 100) : 0;
+        return `<article class="ot-card">
+          <h3>${esc(c.title || c.id)}</h3>
+          <div class="muted">${esc(c.channel || "")} · ${esc(c.id)}${c.eventUrl ? ` · <a href="${esc(c.eventUrl)}" target="_blank" rel="noopener">event</a>` : ""}</div>
+          <div class="ot-tiles">
+            <div class="ot-tile"><div class="k">Sent</div><div class="v">${msgs.length}</div></div>
+            <div class="ot-tile"><div class="k">Replied</div><div class="v">${replied}</div></div>
+            <div class="ot-tile"><div class="k">Reply rate</div><div class="v">${rate}%</div></div>
+            <div class="ot-tile"><div class="k">Going</div><div class="v">${going}</div></div>
+            <div class="ot-tile"><div class="k">Asked to stop</div><div class="v">${stop}</div></div>
+          </div>
+          <div class="muted">${msgs.length - checked} of ${msgs.length} replies not checked yet</div>
+          ${c.messageTemplate ? `<details class="ot-msgs"><summary>Message text</summary><pre>${esc(c.messageTemplate)}</pre></details>` : ""}
+        </article>`;
+      }).join("")}</div>`;
+    }
+
+    function visibleContacts() {
+      const lastMsg = new Map();
+      for (const m of data.messages) {
+        const prev = lastMsg.get(m.contactId);
+        if (!prev || String(m.sentAt) > String(prev.sentAt)) lastMsg.set(m.contactId, m);
+      }
+      const q = query.trim().toLowerCase();
+      return data.contacts
+        .map((c) => ({ ...c, _last: lastMsg.get(c.id) }))
+        .filter((c) => !q || [c.name, c.phone, c.phoneDisplay, c.instagram, c.notes].some((v) => String(v || "").toLowerCase().includes(q)))
+        .filter((c) => {
+          switch (filter) {
+            case "replied": return (c.replyCount || 0) > 0;
+            case "unchecked": return c._last && (c._last.replied === null || c._last.replied === undefined);
+            case "dnc": return !!c.doNotContact;
+            case "ig": return !!c.instagram;
+            case "noig": return !c.instagram;
+            default: return true;
+          }
+        })
+        .sort((a, b) => {
+          const av = a[sortKey] ?? "", bv = b[sortKey] ?? "";
+          if (typeof av === "number" || typeof bv === "number") return ((Number(av) || 0) - (Number(bv) || 0)) * sortDir;
+          return String(av).localeCompare(String(bv)) * sortDir;
+        });
+    }
+
+    function renderTable() {
+      const rows = visibleContacts();
+      document.getElementById("count").textContent = `${rows.length} of ${data.contacts.length} contacts`;
+      document.getElementById("table").innerHTML = `<table>
+        <thead><tr>${COLS.map(([k, l]) => `<th data-k="${k}" ${k === sortKey ? `aria-sort="${sortDir > 0 ? "ascending" : "descending"}"` : ""}>${l}${k === sortKey ? (sortDir > 0 ? " ↑" : " ↓") : ""}</th>`).join("")}</tr></thead>
+        <tbody>${rows.map((c) => {
+          const wa = String(c.phone || "").replace(/\D/g, "");
+          return `<tr>
+            <td><span class="name">${esc(c.name)}</span>${c.doNotContact ? ` <span class="pill o-dnc" title="${esc(c.doNotContactReason || "")}">Do not contact</span>` : ""}${c.notes ? `<div class="muted">${esc(c.notes)}</div>` : ""}</td>
+            <td class="nowrap">${wa ? `<a href="https://wa.me/${wa}" target="_blank" rel="noopener">${esc(c.phoneDisplay || c.phone)}</a>` : "—"}</td>
+            <td>${c.instagram ? `<a href="https://instagram.com/${encodeURIComponent(c.instagram)}" target="_blank" rel="noopener">@${esc(c.instagram)}</a>` : `<span class="muted">—</span>`}</td>
+            <td class="num">${c.messageCount || 0}</td>
+            <td class="num">${c.replyCount || 0}</td>
+            <td class="nowrap">${fmt(c.lastContactedAt)}</td>
+            <td class="nowrap">${esc(c.lastCampaignId || "—")}</td>
+            <td>${c._last ? outcomePill(c._last.outcome) + (c._last.replyNote ? `<div class="muted">${esc(c._last.replyNote)}</div>` : "") : "—"}</td>
+          </tr>`;
+        }).join("") || `<tr><td colspan="${COLS.length}" class="muted">No contacts match.</td></tr>`}</tbody>
+      </table>`;
+    }
+
+    function renderFilter() {
+      const el = document.getElementById("filter");
+      el.innerHTML = FILTERS.map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filter === k}">${l}</button>`).join("");
+    }
+
+    async function render() {
+      content.innerHTML = `<p class="muted">Loading&hellip;</p>`;
+      try {
+        data = await listOutreach();
+      } catch (err) {
+        content.innerHTML = `<div class="notice error">Couldn't load outreach data: ${esc(err.message)}</div>`;
+        return;
+      }
+      content.innerHTML = `
+        <h2>Campaigns</h2>
+        ${campaignCards()}
+        <h2>Contacts</h2>
+        <div class="ot-bar">
+          <input type="search" id="q" placeholder="Search name, phone, Instagram…" aria-label="Search contacts" />
+          <span class="muted" id="count"></span>
+        </div>
+        <div class="ot-filter ot-bar" id="filter" role="group" aria-label="Filter contacts"></div>
+        <div class="ot-wrap" id="table"></div>`;
+      document.getElementById("q").addEventListener("input", (e) => { query = e.target.value; renderTable(); });
+      document.getElementById("filter").addEventListener("click", (e) => {
+        const b = e.target.closest("button"); if (!b) return;
+        filter = b.dataset.f; renderFilter(); renderTable();
+      });
+      document.getElementById("table").addEventListener("click", (e) => {
+        const th = e.target.closest("th"); if (!th) return;
+        if (sortKey === th.dataset.k) sortDir = -sortDir;
+        else { sortKey = th.dataset.k; sortDir = ["name", "instagram", "phone", "lastCampaignId"].includes(sortKey) ? 1 : -1; }
+        renderTable();
+      });
+      renderFilter();
+      renderTable();
+    }
+
+    if (MOCK_MODE) {
+      content.innerHTML = `<p class="muted">Local preview mode — no outreach data.</p>`;
+    } else {
+      onAdminAuthChange(({ signedIn, isAdmin, email }) => {
+        if (!signedIn) {
+          who.textContent = "";
+          content.innerHTML = `<div class="ot-card"><p>Sign in with the admin Google account to see outreach contacts.</p><button id="signin">Sign in with Google</button></div>`;
+          document.getElementById("signin").addEventListener("click", () => signInAdmin().catch((err) => alert(err.message)));
+        } else if (!isAdmin) {
+          who.textContent = email;
+          content.innerHTML = `<div class="notice error">Signed in as ${esc(email)}, which isn't the admin account.</div>`;
+        } else {
+          who.innerHTML = `${esc(email)} &middot; <a href="#" id="signout-link">sign out</a>`;
+          document.getElementById("signout-link").addEventListener("click", (e) => { e.preventDefault(); signOutAdmin(); });
+          render();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

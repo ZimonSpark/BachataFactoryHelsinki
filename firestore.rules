@@ -109,6 +109,18 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Outreach tracker (WhatsApp campaign log: contacts with phone numbers, messages
+    // sent, replies). Written by Simon's local CLI, viewed on outreach.html. Admin only.
+    match /outreachContacts/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /outreachMessages/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /outreachCampaigns/{id} {
+      allow read, write: if isAdmin();
+    }
+
     // Admin-only bookkeeping, e.g. markers for one-time data migrations run from the dashboard.
     match /adminMeta/{doc} {
       allow read, write: if isAdmin();
