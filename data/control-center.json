@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-24T22:36:00+02:00",
+  "updatedAt": "2026-11-24T23:28:08+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,10 +35,10 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-24T20:57:06+02:00",
+      "lastRunAt": "2026-11-24T23:28:08+02:00",
       "lastStatus": "ok",
       "stats": {
-        "Followed (last 7 days)": "152",
+        "Followed (last 7 days)": "172",
         "Follow-back rate (14 days)": "not enough data yet",
         "Daily cap": "60"
       }
@@ -131,6 +131,31 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-24T22:50:08+02:00",
+      "finishedAt": "2026-11-24T23:28:08+02:00",
+      "status": "ok",
+      "summary": "Followed 20 (18 following, 2 requested), skipped 18 without profile picture.",
+      "metrics": {
+        "Followed": 20,
+        "Requested": 2,
+        "Skipped (no picture)": 18,
+        "Today": 40
+      },
+      "details": [
+        {
+          "kind": "created",
+          "title": "20 new follows from the Dance Social follower list",
+          "note": "No throttling signals seen."
+        },
+        {
+          "kind": "warning",
+          "title": "Only one source account configured",
+          "note": "About 620 rows of its follower list had to be loaded to find 20 eligible accounts; consider adding more sources to instagram/config.json."
+        }
+      ]
+    },
     {
       "taskId": "ig-followers-sync",
       "startedAt": "2026-11-24T22:23:37+02:00",
@@ -1105,9 +1130,9 @@
       },
       {
         "date": "2026-11-24",
-        "followed": 20,
+        "followed": 40,
         "followedBack": 0,
-        "waiting": 20,
+        "waiting": 40,
         "unfollowed": 0
       }
     ],
