@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-24T12:19:30+02:00",
+  "updatedAt": "2026-11-24T20:57:06+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,10 +35,12 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-24T12:19:30+02:00",
-      "lastStatus": "error",
+      "lastRunAt": "2026-11-24T20:57:06+02:00",
+      "lastStatus": "ok",
       "stats": {
-        "Daily cap": 60
+        "Followed (last 7 days)": "152",
+        "Follow-back rate (14 days)": "not enough data yet",
+        "Daily cap": "60"
       }
     },
     {
@@ -129,6 +131,26 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-24T20:07:06+02:00",
+      "finishedAt": "2026-11-24T20:57:06+02:00",
+      "status": "ok",
+      "summary": "Followed 20 (13 following, 7 requested), skipped 16 without profile picture.",
+      "metrics": {
+        "Followed": 20,
+        "Requested": 7,
+        "Skipped (no picture)": 16,
+        "Today": 20
+      },
+      "details": [
+        {
+          "kind": "warning",
+          "title": "Lenovo Chrome window not usable",
+          "note": "The always-on laptop's Chrome reported a 0x0 window (likely minimized), so this run used the main laptop's Chrome, which is also logged in as bachataclubnights."
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-24T12:18:00+02:00",
@@ -1053,6 +1075,13 @@
         "followed": 44,
         "followedBack": 4,
         "waiting": 40,
+        "unfollowed": 0
+      },
+      {
+        "date": "2026-11-24",
+        "followed": 20,
+        "followedBack": 0,
+        "waiting": 20,
         "unfollowed": 0
       }
     ],
