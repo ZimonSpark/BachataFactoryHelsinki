@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-25T10:24:00+02:00",
+  "updatedAt": "2026-11-25T12:50:09+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,10 +35,10 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-24T23:28:08+02:00",
+      "lastRunAt": "2026-11-25T12:50:09+02:00",
       "lastStatus": "ok",
       "stats": {
-        "Followed (last 7 days)": "172",
+        "Followed (last 7 days)": "173",
         "Follow-back rate (14 days)": "not enough data yet",
         "Daily cap": "60"
       }
@@ -131,6 +131,31 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-25T12:18:00+02:00",
+      "finishedAt": "2026-11-25T12:50:09+02:00",
+      "status": "ok",
+      "summary": "Followed 20 (2 following, 18 requested), skipped 15 without profile picture.",
+      "metrics": {
+        "Followed": 20,
+        "Requested": 18,
+        "Skipped (no picture)": 15,
+        "Today": 20
+      },
+      "details": [
+        {
+          "kind": "skipped",
+          "title": "1 business account skipped",
+          "note": "Non-dance business profile left out as off-target."
+        },
+        {
+          "kind": "warning",
+          "title": "Only one source account configured",
+          "note": "Most of the first ~500 rows of the source's followers were already followed; consider adding more sources to instagram/config.json."
+        }
+      ]
+    },
     {
       "taskId": "ig-party-notes",
       "startedAt": "2026-11-25T10:21:00+02:00",
@@ -1147,6 +1172,13 @@
         "followed": 40,
         "followedBack": 0,
         "waiting": 40,
+        "unfollowed": 0
+      },
+      {
+        "date": "2026-11-25",
+        "followed": 20,
+        "followedBack": 0,
+        "waiting": 20,
         "unfollowed": 0
       }
     ],
