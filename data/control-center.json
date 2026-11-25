@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-24T23:28:08+02:00",
+  "updatedAt": "2026-11-25T10:24:00+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -126,11 +126,25 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-16T19:44:00+02:00",
+      "lastRunAt": "2026-11-25T10:24:00+02:00",
       "lastStatus": "ok"
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-party-notes",
+      "startedAt": "2026-11-25T10:21:00+02:00",
+      "finishedAt": "2026-11-25T10:24:00+02:00",
+      "status": "ok",
+      "summary": "Posted Note (2 days before BACHATA CLUB Season Finale, Fri 27 Nov): 'Fri 27.11 BACHATA CLUB Season Finale 💃 18:00'",
+      "details": [
+        {
+          "kind": "created",
+          "title": "Instagram Note",
+          "note": "Fri 27.11 BACHATA CLUB Season Finale 💃 18:00"
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-24T22:50:08+02:00",
