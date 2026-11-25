@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-25T12:50:09+02:00",
+  "updatedAt": "2026-11-25T16:42:00+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,10 +35,10 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-25T12:50:09+02:00",
-      "lastStatus": "ok",
+      "lastRunAt": "2026-11-25T16:42:00+02:00",
+      "lastStatus": "warning",
       "stats": {
-        "Followed (last 7 days)": "173",
+        "Followed (last 7 days)": "170",
         "Follow-back rate (14 days)": "not enough data yet",
         "Daily cap": "60"
       }
@@ -131,6 +131,31 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-25T16:20:00+02:00",
+      "finishedAt": "2026-11-25T16:42:00+02:00",
+      "status": "warning",
+      "summary": "Followed 11 (2 following, 9 requested), then a Follow click did not register, so all Instagram tasks are paused 48 h until 27 Nov 16:40 (Helsinki).",
+      "metrics": {
+        "Followed": 11,
+        "Requested": 9,
+        "Skipped (no picture)": 22,
+        "Today": 31
+      },
+      "details": [
+        {
+          "kind": "warning",
+          "title": "Throttling signal: follow click did not register",
+          "note": "Stopped after 11 of 20 follows. Cooldown set; all Instagram tasks paused until 2026-11-27 16:40 Helsinki time."
+        },
+        {
+          "kind": "skipped",
+          "title": "Skipped 1 business account",
+          "note": "A non-dance business (skin clinic) follower was skipped."
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-25T12:18:00+02:00",
@@ -1176,9 +1201,9 @@
       },
       {
         "date": "2026-11-25",
-        "followed": 20,
-        "followedBack": 0,
-        "waiting": 20,
+        "followed": 31,
+        "followedBack": 1,
+        "waiting": 30,
         "unfollowed": 0
       }
     ],
