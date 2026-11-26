@@ -42,6 +42,7 @@
     .o-not-going, .o-no-reply { color: var(--text-muted); }
     .o-stop, .o-dnc { color: var(--danger); border-color: #4a1c22; }
     .o-unchecked { color: var(--text-muted); border-style: dashed; }
+    .o-new { color: #7aa6ff; border-color: #22304a; }
     .notice { padding: .8rem 1rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); }
     .notice.error { border-color: var(--red-deep); }
     .ot-msgs summary { cursor: pointer; color: var(--gold-soft); font-size: .88rem; margin-top: .6rem; }
@@ -78,6 +79,7 @@
 
     const FILTERS = [
       ["all", "All"],
+      ["new", "Not texted yet"],
       ["replied", "Replied"],
       ["unchecked", "Reply not checked"],
       ["dnc", "Do not contact"],
@@ -127,6 +129,7 @@
         .filter((c) => !q || [c.name, c.phone, c.phoneDisplay, c.instagram, c.notes].some((v) => String(v || "").toLowerCase().includes(q)))
         .filter((c) => {
           switch (filter) {
+            case "new": return !c.messageCount && !c.doNotContact;
             case "replied": return (c.replyCount || 0) > 0;
             case "unchecked": return c._last && (c._last.replied === null || c._last.replied === undefined);
             case "dnc": return !!c.doNotContact;
@@ -157,7 +160,7 @@
             <td class="num">${c.replyCount || 0}</td>
             <td class="nowrap">${fmt(c.lastContactedAt)}</td>
             <td class="nowrap">${esc(c.lastCampaignId || "—")}</td>
-            <td>${c._last ? outcomePill(c._last.outcome) + (c._last.replyNote ? `<div class="muted">${esc(c._last.replyNote)}</div>` : "") : "—"}</td>
+            <td>${c._last ? outcomePill(c._last.outcome) + (c._last.replyNote ? `<div class="muted">${esc(c._last.replyNote)}</div>` : "") : `<span class="pill o-new">Not texted yet</span>`}</td>
           </tr>`;
         }).join("") || `<tr><td colspan="${COLS.length}" class="muted">No contacts match.</td></tr>`}</tbody>
       </table>`;
