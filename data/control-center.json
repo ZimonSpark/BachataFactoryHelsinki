@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T14:20:26Z",
+  "updatedAt": "2026-11-26T18:23:52+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,11 +35,11 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-26T14:20:26Z",
+      "lastRunAt": "2026-11-26T18:23:52+02:00",
       "lastStatus": "warning",
       "stats": {
-        "Followed (last 7 days)": "135",
-        "Follow-back rate (14 days)": "9%",
+        "Followed (last 7 days)": "137",
+        "Follow-back rate (14 days)": "20%",
         "Daily cap": "60"
       }
     },
@@ -131,6 +131,31 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-26T18:18:00+02:00",
+      "finishedAt": "2026-11-26T18:23:52+02:00",
+      "status": "warning",
+      "summary": "Followed 2 (2 following, 0 requested), skipped 13 without profile picture; stopped early because all source accounts are used up.",
+      "metrics": {
+        "Followed": 2,
+        "Requested": 0,
+        "Skipped (no picture)": 13,
+        "Today": 2
+      },
+      "details": [
+        {
+          "kind": "warning",
+          "title": "All source accounts used up — add more sources to instagram/config.json (sources list)",
+          "note": "dancesocial_bachata_helsinki: ~460 follower rows scanned, nearly all already followed before or without a picture."
+        },
+        {
+          "kind": "warning",
+          "title": "Source babgen2 not available",
+          "note": "Instagram shows 'Sorry, this page isn't available' for babgen2 — the handle may be wrong, renamed or removed."
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-26T16:18:00+02:00",
@@ -1244,6 +1269,13 @@
         "followed": 31,
         "followedBack": 1,
         "waiting": 30,
+        "unfollowed": 0
+      },
+      {
+        "date": "2026-11-26",
+        "followed": 2,
+        "followedBack": 0,
+        "waiting": 2,
         "unfollowed": 0
       }
     ],
