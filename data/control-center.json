@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T12:20:30+02:00",
+  "updatedAt": "2026-11-26T14:20:26Z",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,10 +35,10 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-26T12:20:30+02:00",
-      "lastStatus": "error",
+      "lastRunAt": "2026-11-26T14:20:26Z",
+      "lastStatus": "warning",
       "stats": {
-        "Followed (last 7 days)": "142",
+        "Followed (last 7 days)": "135",
         "Follow-back rate (14 days)": "9%",
         "Daily cap": "60"
       }
@@ -131,6 +131,26 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-26T16:18:00+02:00",
+      "finishedAt": "2026-11-26T14:20:26Z",
+      "status": "warning",
+      "summary": "Followed 0: all source accounts used up (no new eligible followers in the first ~156 rows of dancesocial_bachata_helsinki, and babgen2's profile is no longer available); skipped 1 without profile picture.",
+      "metrics": {
+        "Followed": 0,
+        "Requested": 0,
+        "Skipped (no picture)": 1,
+        "Today": 0
+      },
+      "details": [
+        {
+          "kind": "warning",
+          "title": "All source accounts used up — add more sources to instagram/config.json (sources list)",
+          "note": "babgen2 shows 'Sorry, this page isn't available' (renamed or removed); dancesocial_bachata_helsinki followers list has nothing new near the top."
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-26T12:18:31+02:00",
