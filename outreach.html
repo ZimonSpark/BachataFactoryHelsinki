@@ -16,7 +16,7 @@
     .ot-back { font-size: .9rem; display: inline-block; margin-bottom: 1rem; }
     .ot-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.2rem; }
     .ot-card h3 { margin: 0 0 .25rem; color: var(--text); font-size: 1.05rem; font-family: "Inter", system-ui, sans-serif; font-weight: 600; }
-    .ot-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); }
+    .ot-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); }
     .ot-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(110px, 100%), 1fr)); gap: .5rem; margin: .8rem 0 .4rem; }
     .ot-tile { border: 1px solid var(--border); border-radius: 10px; padding: .45rem .65rem; }
     .ot-tile .k { font-size: .75rem; color: var(--text-muted); }
@@ -43,6 +43,26 @@
     .o-stop, .o-dnc { color: var(--danger); border-color: #4a1c22; }
     .o-unchecked { color: var(--text-muted); border-style: dashed; }
     .o-new { color: #7aa6ff; border-color: #22304a; }
+    /* Response buckets — dark-surface steps of the Control Center's categorical palette */
+    .ot-card { --r-replied: #3987e5; --r-reacted: #c8a96a; --r-none: #5a5955; --r-unchecked: #2a2a2d; }
+    .ot-wrap { --r-replied: #3987e5; --r-reacted: #c8a96a; --r-none: #85837d; }
+    .pill.r-replied { color: var(--r-replied); border-color: #22304a; }
+    .pill.r-reacted { color: var(--r-reacted); border-color: #3a3326; }
+    .pill.r-none { color: var(--r-none); }
+    .pill.r-unchecked { color: var(--text-muted); border-style: dashed; }
+    .ot-split { display: flex; gap: 2px; height: 12px; border-radius: 6px; overflow: hidden; margin: .9rem 0 .6rem; }
+    .ot-split .seg { min-width: 4px; }
+    .seg.r-replied, .sw.r-replied { background: var(--r-replied); }
+    .seg.r-reacted, .sw.r-reacted { background: var(--r-reacted); }
+    .seg.r-none, .sw.r-none { background: var(--r-none); }
+    .seg.r-unchecked, .sw.r-unchecked { background: var(--r-unchecked); border: 1px dashed #5a5955; }
+    .ot-legend { list-style: none; margin: 0 0 .4rem; padding: 0; display: grid; gap: .25rem; font-size: .88rem; color: var(--text-body); }
+    .ot-legend li { display: flex; align-items: center; gap: .45rem; }
+    .ot-legend b { color: var(--text); font-variant-numeric: tabular-nums; }
+    .ot-legend .sw { width: .7rem; height: .7rem; border-radius: 3px; flex: none; }
+    .ot-tile .d { font-size: .72rem; color: var(--text-muted); }
+    .ot td.react { font-size: 1.05rem; }
+    .ot .snip { font-size: .8rem; min-width: 16rem; max-width: 26rem; margin-top: .2rem; }
     .notice { padding: .8rem 1rem; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); }
     .notice.error { border-color: var(--red-deep); }
     .ot-msgs summary { cursor: pointer; color: var(--gold-soft); font-size: .88rem; margin-top: .6rem; }
@@ -77,18 +97,31 @@
 
     let data, query = "", filter = "all", sortKey = "lastContactedAt", sortDir = -1;
 
+    // Response bucket for one message: replied (wrote back, maybe also reacted) > reacted only > no response.
+    const responseOf = (m) => {
+      if (!m) return null;
+      if (m.replied === true) return "replied";
+      if (m.reaction) return "reacted";
+      if (m.replied === false || m.checkedAt) return "none";
+      return "unchecked";
+    };
+    const RESP_LABEL = { replied: "Replied", reacted: "Reacted only", none: "No response", unchecked: "Not checked" };
+    const respPill = (r) => r ? `<span class="pill r-${r}">${RESP_LABEL[r]}</span>` : `<span class="pill o-new">Not texted yet</span>`;
+
     const FILTERS = [
       ["all", "All"],
       ["new", "Not texted yet"],
       ["replied", "Replied"],
-      ["unchecked", "Reply not checked"],
+      ["reacted", "Reacted only"],
+      ["none", "No response"],
+      ["unchecked", "Not checked"],
       ["dnc", "Do not contact"],
       ["ig", "Has Instagram"],
       ["noig", "No Instagram"],
     ];
     const COLS = [
       ["name", "Name"], ["phone", "WhatsApp"], ["instagram", "Instagram"], ["messageCount", "Msgs"],
-      ["replyCount", "Replies"], ["lastContactedAt", "Last contacted"], ["lastCampaignId", "Last campaign"], ["lastOutcome", "Last outcome"],
+      ["response", "Response"], ["reaction", "Reaction"], ["lastContactedAt", "Last contacted"], ["lastCampaignId", "Last campaign"], ["lastOutcome", "Outcome"],
     ];
 
     function campaignCards() {
@@ -96,22 +129,40 @@
       if (!camps.length) return `<p class="muted">No campaigns logged yet.</p>`;
       return `<div class="ot-grid">${camps.map((c) => {
         const msgs = data.messages.filter((m) => m.campaignId === c.id);
-        const replied = msgs.filter((m) => m.replied === true).length;
-        const checked = msgs.filter((m) => m.replied !== null && m.replied !== undefined).length;
+        const n = { replied: 0, reacted: 0, none: 0, unchecked: 0 };
+        for (const m of msgs) n[responseOf(m)]++;
+        const checked = msgs.length - n.unchecked;
+        const pct = (x) => (checked ? Math.round((x / checked) * 100) : 0);
+        const reactedAny = msgs.filter((m) => m.reaction).length;
         const going = msgs.filter((m) => m.outcome === "going").length;
+        const maybe = msgs.filter((m) => m.outcome === "maybe").length;
+        const notGoing = msgs.filter((m) => m.outcome === "not-going").length;
         const stop = msgs.filter((m) => m.outcome === "stop").length;
-        const rate = msgs.length ? Math.round((replied / msgs.length) * 100) : 0;
+        const lastCheck = msgs.map((m) => m.checkedAt).filter(Boolean).sort().pop();
+        const seg = (k, label) => n[k] ? `<span class="seg r-${k}" style="flex:${n[k]}" title="${label}: ${n[k]}"></span>` : "";
         return `<article class="ot-card">
           <h3>${esc(c.title || c.id)}</h3>
           <div class="muted">${esc(c.channel || "")} · ${esc(c.id)}${c.eventUrl ? ` · <a href="${esc(c.eventUrl)}" target="_blank" rel="noopener">event</a>` : ""}</div>
           <div class="ot-tiles">
             <div class="ot-tile"><div class="k">Sent</div><div class="v">${msgs.length}</div></div>
-            <div class="ot-tile"><div class="k">Replied</div><div class="v">${replied}</div></div>
-            <div class="ot-tile"><div class="k">Reply rate</div><div class="v">${rate}%</div></div>
+            <div class="ot-tile"><div class="k">Response rate</div><div class="v">${pct(n.replied + n.reacted)}%</div><div class="d">reply or reaction</div></div>
+            <div class="ot-tile"><div class="k">Reply rate</div><div class="v">${pct(n.replied)}%</div></div>
+          </div>
+          <div class="ot-split" aria-hidden="true">${seg("replied", "Replied")}${seg("reacted", "Reacted only")}${seg("none", "No response")}${seg("unchecked", "Not checked")}</div>
+          <ul class="ot-legend">
+            <li><span class="sw r-replied"></span>Replied <b>${n.replied}</b> <span class="muted">(${pct(n.replied)}%)</span></li>
+            <li><span class="sw r-reacted"></span>Reacted only <b>${n.reacted}</b> <span class="muted">(${pct(n.reacted)}%)</span></li>
+            <li><span class="sw r-none"></span>No reply, no reaction <b>${n.none}</b> <span class="muted">(${pct(n.none)}%)</span></li>
+            ${n.unchecked ? `<li><span class="sw r-unchecked"></span>Not checked <b>${n.unchecked}</b></li>` : ""}
+          </ul>
+          <div class="ot-tiles">
+            <div class="ot-tile"><div class="k">Reacted (any)</div><div class="v">${reactedAny}</div></div>
             <div class="ot-tile"><div class="k">Going</div><div class="v">${going}</div></div>
+            <div class="ot-tile"><div class="k">Maybe</div><div class="v">${maybe}</div></div>
+            <div class="ot-tile"><div class="k">Not going</div><div class="v">${notGoing}</div></div>
             <div class="ot-tile"><div class="k">Asked to stop</div><div class="v">${stop}</div></div>
           </div>
-          <div class="muted">${msgs.length - checked} of ${msgs.length} replies not checked yet</div>
+          <div class="muted">${lastCheck ? `Responses checked ${fmt(lastCheck, true)}` : "Responses not checked yet"} · rates are out of ${checked} checked</div>
           ${c.messageTemplate ? `<details class="ot-msgs"><summary>Message text</summary><pre>${esc(c.messageTemplate)}</pre></details>` : ""}
         </article>`;
       }).join("")}</div>`;
@@ -125,13 +176,12 @@
       }
       const q = query.trim().toLowerCase();
       return data.contacts
-        .map((c) => ({ ...c, _last: lastMsg.get(c.id) }))
+        .map((c) => { const m = lastMsg.get(c.id); return { ...c, _last: m, response: responseOf(m) || "", reaction: m?.reaction || "" }; })
         .filter((c) => !q || [c.name, c.phone, c.phoneDisplay, c.instagram, c.notes].some((v) => String(v || "").toLowerCase().includes(q)))
         .filter((c) => {
           switch (filter) {
             case "new": return !c.messageCount && !c.doNotContact;
-            case "replied": return (c.replyCount || 0) > 0;
-            case "unchecked": return c._last && (c._last.replied === null || c._last.replied === undefined);
+            case "replied": case "reacted": case "none": case "unchecked": return c.response === filter;
             case "dnc": return !!c.doNotContact;
             case "ig": return !!c.instagram;
             case "noig": return !c.instagram;
@@ -157,10 +207,11 @@
             <td class="nowrap">${wa ? `<a href="https://wa.me/${wa}" target="_blank" rel="noopener">${esc(c.phoneDisplay || c.phone)}</a>` : "—"}</td>
             <td>${c.instagram ? `<a href="https://instagram.com/${encodeURIComponent(c.instagram)}" target="_blank" rel="noopener">@${esc(c.instagram)}</a>` : `<span class="muted">—</span>`}</td>
             <td class="num">${c.messageCount || 0}</td>
-            <td class="num">${c.replyCount || 0}</td>
+            <td>${respPill(c.response)}</td>
+            <td class="react">${c.reaction ? esc(c.reaction) : `<span class="muted">—</span>`}</td>
             <td class="nowrap">${fmt(c.lastContactedAt)}</td>
             <td class="nowrap">${esc(c.lastCampaignId || "—")}</td>
-            <td>${c._last ? outcomePill(c._last.outcome) + (c._last.replyNote ? `<div class="muted">${esc(c._last.replyNote)}</div>` : "") : `<span class="pill o-new">Not texted yet</span>`}</td>
+            <td>${c._last?.outcome && c._last.outcome !== "no-reply" ? outcomePill(c._last.outcome) : `<span class="muted">—</span>`}${(c._last?.replySnippets?.[0] || c._last?.replyNote) ? `<div class="muted snip">“${esc(c._last.replySnippets?.[0] || c._last.replyNote)}”</div>` : ""}</td>
           </tr>`;
         }).join("") || `<tr><td colspan="${COLS.length}" class="muted">No contacts match.</td></tr>`}</tbody>
       </table>`;
