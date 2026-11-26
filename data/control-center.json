@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-25T16:42:00+02:00",
+  "updatedAt": "2026-11-26T12:20:30+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,11 +35,11 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-25T16:42:00+02:00",
-      "lastStatus": "warning",
+      "lastRunAt": "2026-11-26T12:20:30+02:00",
+      "lastStatus": "error",
       "stats": {
-        "Followed (last 7 days)": "170",
-        "Follow-back rate (14 days)": "not enough data yet",
+        "Followed (last 7 days)": "142",
+        "Follow-back rate (14 days)": "9%",
         "Daily cap": "60"
       }
     },
@@ -131,6 +131,26 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-26T12:18:31+02:00",
+      "finishedAt": "2026-11-26T12:20:30+02:00",
+      "status": "error",
+      "summary": "Followed 0: all source accounts used up — the first source's ~156 visible followers are already followed or have no profile picture, and the second source's page is no longer available. Add more sources to instagram/config.json (sources list).",
+      "metrics": {
+        "Followed": 0,
+        "Requested": 0,
+        "Skipped (no picture)": 1,
+        "Today": 0
+      },
+      "details": [
+        {
+          "kind": "warning",
+          "title": "All source accounts used up",
+          "note": "Add more sources to instagram/config.json (sources list). Second source returns 'page isn't available' (renamed or removed)."
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-25T16:20:00+02:00",
