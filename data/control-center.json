@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T10:24:00+02:00",
+  "updatedAt": "2026-11-27T10:22:11+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,11 +35,11 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-26T18:23:52+02:00",
+      "lastRunAt": "2026-11-27T10:22:11+02:00",
       "lastStatus": "warning",
       "stats": {
         "Followed (last 7 days)": "137",
-        "Follow-back rate (14 days)": "20%",
+        "Follow-back rate (14 days)": "17%",
         "Daily cap": "60"
       }
     },
@@ -131,6 +131,36 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-27T10:18:00+02:00",
+      "finishedAt": "2026-11-27T10:22:11+02:00",
+      "status": "warning",
+      "summary": "Followed 2 (0 following, 2 requested), skipped 1 without profile picture; stopped early because all source accounts are used up (one source profile no longer exists).",
+      "metrics": {
+        "Followed": 2,
+        "Requested": 2,
+        "Skipped (no picture)": 1,
+        "Today": 2
+      },
+      "details": [
+        {
+          "kind": "warning",
+          "title": "All source accounts used up",
+          "note": "All source accounts used up — add more sources to instagram/config.json (sources list)"
+        },
+        {
+          "kind": "warning",
+          "title": "Source profile not found",
+          "note": "The second source account in config.json shows 'Page not found' on Instagram (renamed or deleted)."
+        },
+        {
+          "kind": "skipped",
+          "title": "Main source exhausted",
+          "note": "About 155 follower rows scanned; only 2 were new, the rest already followed or followed before."
+        }
+      ]
+    },
     {
       "taskId": "ig-party-notes",
       "startedAt": "2026-11-27T10:21:00+02:00",
@@ -1311,6 +1341,13 @@
       },
       {
         "date": "2026-11-26",
+        "followed": 2,
+        "followedBack": 0,
+        "waiting": 2,
+        "unfollowed": 0
+      },
+      {
+        "date": "2026-11-27",
         "followed": 2,
         "followedBack": 0,
         "waiting": 2,
