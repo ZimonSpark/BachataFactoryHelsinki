@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T20:51:10+02:00",
+  "updatedAt": "2026-11-27T22:32:58+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -56,12 +56,12 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-26T22:30:17+02:00",
+      "lastRunAt": "2026-11-27T22:32:58+02:00",
       "lastStatus": "ok",
       "stats": {
-        "Followers": "609",
-        "Following": "898",
-        "Follow-back rate (14 days)": "20%"
+        "Followers": "620",
+        "Following": "906",
+        "Follow-back rate (14 days)": "18%"
       }
     },
     {
@@ -131,6 +131,27 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-followers-sync",
+      "startedAt": "2026-11-27T22:23:38+02:00",
+      "finishedAt": "2026-11-27T22:32:58+02:00",
+      "status": "ok",
+      "summary": "620 followers (+12 / -1), 906 following; 7 follow-backs",
+      "metrics": {
+        "Followers": 620,
+        "New followers": 12,
+        "Lost followers": 1,
+        "Follow-backs": 7,
+        "Following": 906
+      },
+      "details": [
+        {
+          "kind": "updated",
+          "title": "Snapshot saved",
+          "note": "Profile shows 619 followers / 927 following; lists read: 620 followers, 906 following (Instagram did not load the last 21 followed accounts). Following: +25 new, -17 dropped."
+        }
+      ]
+    },
     {
       "taskId": "ig-follow-batch",
       "startedAt": "2026-11-27T20:18:44+02:00",
@@ -1324,8 +1345,8 @@
       {
         "date": "2026-11-15",
         "followed": 49,
-        "followedBack": 15,
-        "waiting": 34,
+        "followedBack": 16,
+        "waiting": 33,
         "unfollowed": 0
       },
       {
@@ -1387,20 +1408,20 @@
       {
         "date": "2026-11-26",
         "followed": 2,
-        "followedBack": 0,
-        "waiting": 2,
+        "followedBack": 1,
+        "waiting": 1,
         "unfollowed": 0
       },
       {
         "date": "2026-11-27",
         "followed": 42,
-        "followedBack": 0,
-        "waiting": 42,
+        "followedBack": 5,
+        "waiting": 37,
         "unfollowed": 0
       }
     ],
-    "snapshotAt": "2026-11-26T20:30:08Z",
-    "followers": 609,
-    "following": 898
+    "snapshotAt": "2026-11-27T20:32:49Z",
+    "followers": 620,
+    "following": 906
   }
 }
