@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-28T11:58:00+02:00",
+  "updatedAt": "2026-11-28T12:24:00+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -35,10 +35,10 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-27T20:51:10+02:00",
-      "lastStatus": "ok",
+      "lastRunAt": "2026-11-28T12:24:00+02:00",
+      "lastStatus": "warning",
       "stats": {
-        "Followed (last 7 days)": "159",
+        "Followed (last 7 days)": "160",
         "Follow-back rate (14 days)": "18%",
         "Daily cap": "60"
       }
@@ -131,6 +131,26 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-follow-batch",
+      "startedAt": "2026-11-28T12:17:00+02:00",
+      "finishedAt": "2026-11-28T12:24:00+02:00",
+      "status": "warning",
+      "summary": "Followed 1 (1 following, 0 requested), skipped 11 without profile picture; stopped early because all source accounts are used up.",
+      "metrics": {
+        "Followed": 1,
+        "Requested": 0,
+        "Skipped (no picture)": 11,
+        "Today": 1
+      },
+      "details": [
+        {
+          "kind": "warning",
+          "title": "All source accounts used up — add more sources to instagram/config.json (sources list)",
+          "note": "First source: about 400 followers scanned, almost all already followed, requested or previously followed. Second source (babgen2) no longer exists on Instagram ('Sorry, this page isn't available')."
+        }
+      ]
+    },
     {
       "taskId": "ig-bio-next-event",
       "startedAt": "2026-11-28T11:53:00+02:00",
@@ -1431,6 +1451,13 @@
         "followed": 42,
         "followedBack": 5,
         "waiting": 37,
+        "unfollowed": 0
+      },
+      {
+        "date": "2026-11-28",
+        "followed": 1,
+        "followedBack": 0,
+        "waiting": 1,
         "unfollowed": 0
       }
     ],
