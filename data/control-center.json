@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-27T22:32:58+02:00",
+  "updatedAt": "2026-11-28T11:58:00+02:00",
   "tasks": [
     {
       "id": "facebook-wedance-sync",
@@ -77,7 +77,7 @@
           "url": "https://www.instagram.com/bachataclubnights/"
         }
       ],
-      "lastRunAt": "2026-11-16T19:08:00+02:00",
+      "lastRunAt": "2026-11-28T11:58:00+02:00",
       "lastStatus": "ok"
     },
     {
@@ -131,6 +131,20 @@
     }
   ],
   "runs": [
+    {
+      "taskId": "ig-bio-next-event",
+      "startedAt": "2026-11-28T11:53:00+02:00",
+      "finishedAt": "2026-11-28T11:58:00+02:00",
+      "status": "ok",
+      "summary": "Bio next event 27/11/2026 → 15/01/2027",
+      "details": [
+        {
+          "kind": "updated",
+          "title": "Instagram bio",
+          "note": "Next event date set to 15/01/2027 (next WeDance party: BACHATA CLUB Night)"
+        }
+      ]
+    },
     {
       "taskId": "ig-followers-sync",
       "startedAt": "2026-11-27T22:23:38+02:00",
